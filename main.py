@@ -1,15 +1,17 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 # Path to save/load from
 PATH = './cifar_net.pth'
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+IMSIZE = 256
+LOADER = transforms.Compose([transforms.Scale(IMSIZE), transforms.ToTensor()])
 
 # Loading CIFAR-10
 transform = transforms.Compose(
@@ -37,6 +39,15 @@ def imshow(img):
     plt.show()
 
 
+def imload(img):
+    image = Image.open(img)
+    image = LOADER(image).float()
+    # image = (image, requires_grad=True)
+    image = image.unsqueeze(0)  # this is for VGG, may not be needed for ResNet
+    return image.cuda()  # assumes that you're using GPU
+
+IMAGE = imload("C:\\Users\\elite\\Desktop\\cat.png")
+
 if __name__ == '__main__':
 
     # Data Iterator
@@ -44,17 +55,17 @@ if __name__ == '__main__':
     # dataiter = iter(trainloader)
     dataiter = iter(testloader)
     images, labels = dataiter.next()
+    print('Truth:\t\t ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
     # imshow(torchvision.utils.make_grid(images))
-    print('Truth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
     # Base Network
     # =====================================================================
     class Net(nn.Module):
         def __init__(self):
             super(Net, self).__init__()
-            self.conv1 = nn.Conv2d(3, 8, 5)
+            self.conv1 = nn.Conv2d(3, 32, 5)
             self.pool = nn.MaxPool2d(2, 2)
-            self.conv2 = nn.Conv2d(8, 16, 5)
+            self.conv2 = nn.Conv2d(32, 16, 5)
             self.fc1 = nn.Linear(16 * 5 * 5, 120)
             self.fc2 = nn.Linear(120, 84)
             self.fc3 = nn.Linear(84, 10)
@@ -73,10 +84,10 @@ if __name__ == '__main__':
     # net.to(DEVICE)  # Only for training
     # criterion = nn.CrossEntropyLoss()
     # optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
-    # Training algorithm
-    # ======================================================================
-    # for epoch in range(10):  # loop over the dataset multiple times
+    #
+    # # Training algorithm
+    # # ======================================================================
+    # for epoch in range(16):  # loop over the dataset multiple times
     #     running_loss = 0.0
     #     for i, data in enumerate(trainloader, 0):
     #         # get the inputs; data is a list of [inputs, labels]
@@ -102,42 +113,43 @@ if __name__ == '__main__':
     # torch.save(net.state_dict(), PATH)
 
     net.load_state_dict(torch.load(PATH))
-    outputs = net(images)
+    net(IMAGE)
+    # outputs = net(images)
 
-    _, predicted = torch.max(outputs, 1)
-    print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-                                  for j in range(4)))
-
-    # Test Run: Overall
-    # ==========================================================
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            outputs = net(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    print('\nAccuracy of the network on the 10000 test images: %d %%' % (
-            100 * correct / total))
-
-    # Test Run: Breakdown
-    # ==========================================================
-    class_correct = list(0. for i in range(10))
-    class_total = list(0. for i in range(10))
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            outputs = net(images)
-            _, predicted = torch.max(outputs, 1)
-            c = (predicted == labels).squeeze()
-            for i in range(4):
-                label = labels[i]
-                class_correct[label] += c[i].item()
-                class_total[label] += 1
-
-    for i in range(10):
-        print('Accuracy of %5s : %2d %%' % (
-            classes[i], 100 * class_correct[i] / class_total[i]))
+    # _, predicted = torch.max(outputs, 1)
+    # print('Predicted:\t ', ' '.join('%5s' % classes[predicted[j]]
+    #                               for j in range(4)))
+    #
+    # # Test Run: Overall
+    # # ==========================================================
+    # correct = 0
+    # total = 0
+    # with torch.no_grad():
+    #     for data in testloader:
+    #         images, labels = data
+    #         outputs = net(images)
+    #         _, predicted = torch.max(outputs.data, 1)
+    #         total += labels.size(0)
+    #         correct += (predicted == labels).sum().item()
+    #
+    # print('\nAccuracy of the network on the 10000 test images: %d %%' % (
+    #         100 * correct / total))
+    #
+    # # Test Run: Breakdown
+    # # ==========================================================
+    # class_correct = list(0. for i in range(10))
+    # class_total = list(0. for i in range(10))
+    # with torch.no_grad():
+    #     for data in testloader:
+    #         images, labels = data
+    #         outputs = net(images)
+    #         _, predicted = torch.max(outputs, 1)
+    #         c = (predicted == labels).squeeze()
+    #         for i in range(4):
+    #             label = labels[i]
+    #             class_correct[label] += c[i].item()
+    #             class_total[label] += 1
+    #
+    # for i in range(10):
+    #     print('Accuracy of %5s : %2d %%' % (
+    #         classes[i], 100 * class_correct[i] / class_total[i]))
