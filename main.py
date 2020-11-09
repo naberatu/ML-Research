@@ -1,13 +1,9 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from net import Net
 import torchvision
 import torchvision.transforms as transforms
-import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
 
 # Parameters
 # ============================================================================================
@@ -30,7 +26,7 @@ trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
 testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                                download=False, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                                 shuffle=False, num_workers=2)
+                                                 shuffle=True, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -60,8 +56,8 @@ if __name__ == '__main__':
 
     # Data Iterator
     # ================================================================
-    dataiter = iter(trainloader)
-    # dataiter = iter(testloader)
+    # dataiter = iter(trainloader)
+    dataiter = iter(testloader)
     images, labels = dataiter.next()
     print('| Truth:\t\t ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
     # imshow(torchvision.utils.make_grid(images))   # Displays images
@@ -72,7 +68,7 @@ if __name__ == '__main__':
     # criterion = nn.CrossEntropyLoss()
     # optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     #
-    # for epoch in range(12):  # loop over the dataset multiple times
+    # for epoch in range(16):  # loop over the dataset multiple times
     #     running_loss = 0.0
     #     for i, data in enumerate(trainloader, 0):
     #         # get the inputs; data is a list of [inputs, labels]
@@ -97,7 +93,7 @@ if __name__ == '__main__':
     # print('Finished Training')
     # torch.save(net.state_dict(), PATH)
 
-    # Neural Net` Testing
+    # Neural Net Testing
     # ==========================================================
     net.load_state_dict(torch.load(PATH))
     outputs = net(images)
