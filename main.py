@@ -60,7 +60,7 @@ if __name__ == '__main__':
     dataiter = iter(testloader)
     images, labels = dataiter.next()
     print('| Truth:\t\t ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
-    # imshow(torchvision.utils.make_grid(images))   # Displays images
+    imshow(torchvision.utils.make_grid(images))   # Displays images
 
     # # Training algorithm
     # # ======================================================================
