@@ -1,4 +1,6 @@
 import torch
+import torch.nn as nn
+import torch.optim as optim
 from net import Net
 import torchvision
 import torchvision.transforms as transforms
@@ -18,20 +20,23 @@ transform = transforms.Compose(
             [transforms.ToTensor(),
              transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                                download=False, transform=transform)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                                 shuffle=True, num_workers=2)
+# trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+#                                                 download=False, transform=transform)
+# trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+#                                                  shuffle=True, num_workers=2)
+#
+# testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+#                                                download=False, transform=transform)
+# testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+#                                                  shuffle=True, num_workers=2)
 
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                               download=False, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                                 shuffle=True, num_workers=2)
+# classes = ('plane', 'car', 'bird', 'cat',
+           # 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-# stlset = torchvision.datasets.STL10(root='./data', download=True)
+classes = ('airplane', 'bird', 'car', 'cat',
+           'deer', 'dog', 'horse', 'monkey', 'ship', 'truck')
+stlset = torchvision.datasets.STL10(root='./data', download=False, transform=transform)
+stlloader = torch.utils.data.DataLoader(stlset, batch_size=4, shuffle=True, num_workers=2)
 
 
 def imshow(img):
@@ -41,15 +46,6 @@ def imshow(img):
     plt.show()
 
 
-# def imload(img):
-#     image = Image.open(img)
-#     image = LOADER(image).float()
-#     # image = (image, requires_grad=True)
-#     image = image.unsqueeze(0)  # this is for VGG, may not be needed for ResNet
-#     return image.cuda()  # assumes that you're using GPU
-
-# IMAGE = imload('C:\\Users\\elite\\Desktop\\cat.png')
-
 if __name__ == '__main__':
 
     net = Net()    # Summon Neural Net
@@ -57,9 +53,10 @@ if __name__ == '__main__':
     # Data Iterator
     # ================================================================
     # dataiter = iter(trainloader)
-    dataiter = iter(testloader)
+    # dataiter = iter(testloader)
+    dataiter = iter(stlloader)
     images, labels = dataiter.next()
-    print('| Truth:\t\t ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
+    print('| Truth:\t\t ', ' '.join('%8s' % classes[labels[j]] for j in range(4)))
     imshow(torchvision.utils.make_grid(images))   # Displays images
 
     # # Training algorithm
@@ -70,7 +67,8 @@ if __name__ == '__main__':
     #
     # for epoch in range(16):  # loop over the dataset multiple times
     #     running_loss = 0.0
-    #     for i, data in enumerate(trainloader, 0):
+    #     # for i, data in enumerate(trainloader, 0):
+    #     for i, data in enumerate(stlloader, 0):
     #         # get the inputs; data is a list of [inputs, labels]
     #         inputs, labels = data[0].to(DEVICE), data[1].to(DEVICE)
     #
@@ -97,30 +95,31 @@ if __name__ == '__main__':
     # ==========================================================
     net.load_state_dict(torch.load(PATH))
     outputs = net(images)
-    # net(IMAGE)
     _, predicted = torch.max(outputs, 1)
-    print('| Predicted:\t ', ' '.join('%5s' % classes[predicted[j]]
+    print('| Predicted:\t ', ' '.join('%8s' % classes[predicted[j]]
                                     for j in range(4)))
 
     # Test Run: Overall
     correct = 0
     total = 0
     with torch.no_grad():
-        for data in testloader:
+        # for data in testloader:
+        for data in stlloader:
             images, labels = data
             outputs = net(images)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    print('\n| Accuracy of the network on the 10000 test images: %d %%' % (
+    print('\n| Accuracy of the network on the 100,000 test images: %d %%' % (
             100 * correct / total))
 
     # Test Run: Breakdown
     class_correct = list(0. for i in range(10))
     class_total = list(0. for i in range(10))
     with torch.no_grad():
-        for data in testloader:
+        # for data in testloader:
+        for data in stlloader:
             images, labels = data
             outputs = net(images)
             _, predicted = torch.max(outputs, 1)
@@ -131,5 +130,5 @@ if __name__ == '__main__':
                 class_total[label] += 1
 
     for i in range(10):
-        print('| Accuracy of %5s : %2d %%' % (
+        print('| Accuracy of %8s : %2d %%' % (
             classes[i], 100 * class_correct[i] / class_total[i]))
