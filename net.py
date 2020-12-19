@@ -5,6 +5,7 @@ IMF = 17     # For quickly modifying dimensional parameters
 
 
 class Net(nn.Module):
+    # CIFAR / STL Network
     def __init__(self):
         super(Net, self).__init__()
         self.pool = nn.MaxPool2d(2, 2)

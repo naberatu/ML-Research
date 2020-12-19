@@ -31,7 +31,7 @@ transform = transforms.Compose(
 #                                                  shuffle=True, num_workers=2)
 
 # classes = ('plane', 'car', 'bird', 'cat',
-           # 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+#            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 classes = ('airplane', 'bird', 'car', 'cat',
            'deer', 'dog', 'horse', 'monkey', 'ship', 'truck')
