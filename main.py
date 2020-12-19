@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 # ============================================================================================
 PATH = './cifar_net.pth'
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# IMSIZE = 256
-# LOADER = transforms.Compose([transforms.Scale(IMSIZE), transforms.ToTensor()])
 
 # Loading CIFAR-10
 # ============================================================================================
