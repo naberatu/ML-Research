@@ -36,6 +36,16 @@ classes = ('airplane', 'bird', 'car', 'cat',
 stlset = torchvision.datasets.STL10(root='./data', download=False, transform=transform)
 stlloader = torch.utils.data.DataLoader(stlset, batch_size=4, shuffle=True, num_workers=2)
 
+# classes = ('5_o_Clock_Shadow', 'Arched_Eyebrows', 'Attractive', 'Bags_Under_Eyes', 'Bald', 'Bangs', '', '', '', '', ''
+#            , '', '', '', '', '', '', '', '', '', ''
+#            , '', '', '', '', '', '', '', '', '', ''
+#            , '', '', '', '', '', '', '', '', '', '')
+# train_celebset = torchvision.datasets.CelebA(root='./data', split='train', target_type='attr',
+#                                              transform=transform, download=False)
+# test_celebset = torchvision.datasets.CelebA(root='./data', split='test', target_type='attr  ',
+#                                             transform=transform, download=False)
+# celebloader = torch.utils.data.DataLoader(train_celebset, batch_size=4, shuffle=True, num_workers=2)
+
 
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
@@ -53,6 +63,7 @@ if __name__ == '__main__':
     # dataiter = iter(trainloader)
     # dataiter = iter(testloader)
     dataiter = iter(stlloader)
+    # dataiter = iter(celebloader)
     images, labels = dataiter.next()
     print('| Truth:\t\t ', ' '.join('%8s' % classes[labels[j]] for j in range(4)))
     imshow(torchvision.utils.make_grid(images))   # Displays images
@@ -66,7 +77,8 @@ if __name__ == '__main__':
     # for epoch in range(16):  # loop over the dataset multiple times
     #     running_loss = 0.0
     #     # for i, data in enumerate(trainloader, 0):
-    #     for i, data in enumerate(stlloader, 0):
+    #     # for i, data in enumerate(stlloader, 0):
+    #     for i, data in enumerate(celebloader, 0):
     #         # get the inputs; data is a list of [inputs, labels]
     #         inputs, labels = data[0].to(DEVICE), data[1].to(DEVICE)
     #
@@ -103,6 +115,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         # for data in testloader:
         for data in stlloader:
+        # for data in celebloader:
             images, labels = data
             outputs = net(images)
             _, predicted = torch.max(outputs.data, 1)
@@ -118,6 +131,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         # for data in testloader:
         for data in stlloader:
+        # for data in celebloader:
             images, labels = data
             outputs = net(images)
             _, predicted = torch.max(outputs, 1)

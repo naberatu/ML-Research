@@ -5,13 +5,15 @@ IMF = 17     # For quickly modifying dimensional parameters
 
 
 class Net(nn.Module):
-    # CIFAR / STL Network
     def __init__(self):
         super(Net, self).__init__()
         self.pool = nn.MaxPool2d(2, 2)
+        # For CIFAR-10
         # self.conv1 = nn.Conv2d(3, 32, 5)
         # self.conv2 = nn.Conv2d(32, 32, 5)
         # self.conv3 = nn.Conv2d(32, 32, 5)
+
+        # For STL-10
         self.conv1 = nn.Conv2d(3, 96, 5)
         self.conv2 = nn.Conv2d(96, 96, 5)
         self.conv3 = nn.Conv2d(96, 96, 5)
