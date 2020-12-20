@@ -5,7 +5,11 @@ from net import Net
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
+import pandas as pd
+from fastai.vision import *
 import matplotlib.pyplot as plt
+pd.set_option('display.max_columns', 500)
+
 
 # Parameters
 # ============================================================================================
