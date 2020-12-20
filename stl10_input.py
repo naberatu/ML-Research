@@ -27,22 +27,22 @@ DEPTH = 3
 # size of a single image in bytes
 SIZE = HEIGHT * WIDTH * DEPTH
 
-# path to the directory with the data
+# PATH to the directory with the data
 DATA_DIR = './data'
 
 # url of the binary data
 DATA_URL = 'http://ai.stanford.edu/~acoates/stl10/stl10_binary.tar.gz'
 
-# path to the binary train file with image data
+# PATH to the binary train file with image data
 DATA_PATH = './data/stl10_binary/train_X.bin'
 
-# path to the binary train file with labels
+# PATH to the binary train file with labels
 LABEL_PATH = './data/stl10_binary/train_y.bin'
 
 
 def read_labels(path_to_labels):
     """
-    :param path_to_labels: path to the binary file containing labels from the STL-10 dataset
+    :param path_to_labels: PATH to the binary file containing labels from the STL-10 dataset
     :return: an array containing the labels
     """
     with open(path_to_labels, 'rb') as f:
@@ -81,7 +81,7 @@ def read_all_images(path_to_data):
 
 def read_single_image(image_file):
     """
-    CAREFUL! - this method uses a file as input instead of the path - so the
+    CAREFUL! - this method uses a file as input instead of the PATH - so the
     position of the reader will be remembered outside of context of this method.
     :param image_file: the open file containing the images
     :return: a single image
