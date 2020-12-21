@@ -72,11 +72,11 @@ print(len(item_list))
 # Will run for about an hour and a half
 for org in notebook.tqdm(item_list):
     face_extractor(origin=org, destination=PATH + 'base_images/' + org.split('/')[-1].split('\\')[-1], fc=face_cascade)
-    break
 
 
 # Finding all the images and separating in training and validation
-item_list = glob.glob(PATH + '*.jpg')
+item_list = glob.glob(PATH + 'base_images/*.jpg')
+print(len(item_list))
 
 for idx in notebook.tqdm(range(1, 202600)):
     if idx <= 182637:
@@ -85,7 +85,7 @@ for idx in notebook.tqdm(range(1, 202600)):
         destination = PATH + 'validation/'
     try:
         shutil.move(
-            PATH + str(idx).zfill(6) + '.jpg',
+            PATH + "base_images/" + str(idx).zfill(6) + '.jpg',
             destination + str(idx).zfill(6) + '.jpg'
         )
     except:
@@ -104,8 +104,8 @@ label_df['label'] = label_df.progress_apply(lambda x: label_generator(x), axis=1
 label_df = label_df.loc[:, ['image_id', 'label']]
 label_df.to_csv('./data/celeba/labels.csv')
 
-# Attachhing label to correct file names
-item_list = glob.glob('./data/celeba/faces/*.jpg')
+# Attaching label to correct file names
+item_list = glob.glob('./data/celeba/faces/base_images/*.jpg')
 item_df = pd.DataFrame({'image_name': pd.Series(item_list).apply(lambda x: '/'.join(x.split('/')[-2]))})
 item_df['image_id'] = item_df.image_name.apply(lambda x: x.split('/')[1])
 
