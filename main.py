@@ -18,8 +18,6 @@ warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.functio
 PATH = Path('./data/celeba/faces/training')
 IMG = ''
 
-
-# def detect_facial_attributes(input_path, output_path, save_video):
 if __name__ == '__main__':
 
     # ==========================================================================
@@ -58,8 +56,7 @@ if __name__ == '__main__':
     # learn.recorder.plot()
 
     print('Learning Rate...', end='')
-    lr = 1e-2
-    # learn.fit_one_cycle(1, slice(lr))
+    lr = 0.0001
     learn.fit(4, slice(lr))
     print('DONE')
 
@@ -77,7 +74,7 @@ if __name__ == '__main__':
     learn.save('ff_stage-2-rn50')
     print('\tDONE')
     # Training Part 2
-    print('Starting up again...')
+    print('Round 2...')
     data = (src.transform(tfms, size=256).databunch(bs=64).normalize(imagenet_stats))
 
     acc_05 = partial(accuracy_thresh, thresh=0.5)
