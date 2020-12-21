@@ -64,34 +64,34 @@ def face_extractor(origin, destination, fc):
 # Defining destination PATH
 PATH = './data/celeba/faces/'
 
-# Finding all the images in the folder
-item_list = glob.glob('./data/celeba/img_align_celeba/*.jpg')
-print(len(item_list))
+# # Finding all the images in the folder
+# item_list = glob.glob('./data/celeba/img_align_celeba/*.jpg')
+# print(len(item_list))
+#
+#
+# # Will run for about an hour and a half
+# for org in notebook.tqdm(item_list):
+#     face_extractor(origin=org, destination=PATH + 'base_images/' + org.split('/')[-1].split('\\')[-1], fc=face_cascade)
+#
+#
+# # Finding all the images and separating in training and validation
+# item_list = glob.glob(PATH + 'base_images/*.jpg')
+# print(len(item_list))
+#
+# for idx in notebook.tqdm(range(1, 202600)):
+#     if idx <= 182637:
+#         destination = PATH + 'training/'
+#     else:
+#         destination = PATH + 'validation/'
+#     try:
+#         shutil.move(
+#             PATH + "base_images/" + str(idx).zfill(6) + '.jpg',
+#             destination + str(idx).zfill(6) + '.jpg'
+#         )
+#     except:
+#         pass
 
-
-# Will run for about an hour and a half
-for org in notebook.tqdm(item_list):
-    face_extractor(origin=org, destination=PATH + 'base_images/' + org.split('/')[-1].split('\\')[-1], fc=face_cascade)
-
-
-# Finding all the images and separating in training and validation
-item_list = glob.glob(PATH + 'base_images/*.jpg')
-print(len(item_list))
-
-for idx in notebook.tqdm(range(1, 202600)):
-    if idx <= 182637:
-        destination = PATH + 'training/'
-    else:
-        destination = PATH + 'validation/'
-    try:
-        shutil.move(
-            PATH + "base_images/" + str(idx).zfill(6) + '.jpg',
-            destination + str(idx).zfill(6) + '.jpg'
-        )
-    except:
-        pass
-
-# Combining all label attributes
+# Converts 1/-1 into string labels
 label_df = pd.read_csv('./data/celeba/list_attr_celeba.csv')
 column_list = pd.Series(list(label_df.columns)[1:])
 
@@ -99,19 +99,19 @@ column_list = pd.Series(list(label_df.columns)[1:])
 def label_generator(row):
     return (' '.join(column_list[[True if i == 1 else False for i in row[column_list]]]))
 
-
 label_df['label'] = label_df.progress_apply(lambda x: label_generator(x), axis=1)
 label_df = label_df.loc[:, ['image_id', 'label']]
-label_df.to_csv('./data/celeba/labels.csv')
+label_df.to_csv('./data/celeba/labels_temp.csv')
+# end of conversion
 
 # Attaching label to correct file names
-item_list = glob.glob('./data/celeba/faces/base_images/*.jpg')
-item_df = pd.DataFrame({'image_name': pd.Series(item_list).apply(lambda x: '/'.join(x.split('/')[-2]))})
-item_df['image_id'] = item_df.image_name.apply(lambda x: x.split('/')[1])
+item_list = glob.glob('./data/celeba/faces/*/*.jpg')
+item_df = pd.DataFrame({'image_name': pd.Series(item_list).apply(lambda x: x.split('\\')[-1])})
+item_df['image_id'] = item_df.image_name.apply(lambda x: x.strip())
 
 # Creating final label set
-label_df = pd.read_csv('./data/celeba/labels.csv')
+label_df = pd.read_csv('./data/celeba/labels_temp.csv')
 label_df = label_df.merge(item_df, on='image_id', how='inner')
 label_df.rename(columns={'label': 'tags'}, inplace=True)
-label_df.loc[:, ['image_name', 'tags']].to_csv('./data/celeba/labels2.csv', index=False)
+label_df.loc[:, ['image_name', 'tags']].to_csv('./data/celeba/faces/labels.csv', index=False)
 
