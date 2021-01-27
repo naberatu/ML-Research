@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/data/celeba/faces/validation" />
+      <excludeFolder url="file://$MODULE_DIR$/data/celeba/img_align_celeba" />
+      <excludeFolder url="file://$MODULE_DIR$/data/cifar-10-batches-py" />
+      <excludeFolder url="file://$MODULE_DIR$/data/stl10_binary" />
+    </content>
     <orderEntry type="jdk" jdkName="Python 3.8 (pytorch)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
