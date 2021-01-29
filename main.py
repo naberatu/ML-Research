@@ -52,7 +52,7 @@ if __name__ == '__main__':
     normalize = transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1])
     train_transformer = transforms.Compose([
         transforms.Resize(256),
-        transforms.RandomResizedCrop((224), scale=(0.5, 1.0)),
+        transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         normalize
