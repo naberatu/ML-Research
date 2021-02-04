@@ -2,16 +2,21 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as transforms
+from skimage.util import montage
 import os
 import cv2
 import random
 import matplotlib.pyplot as plt
 import torch.optim as optim
 from PIL import Image
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve, confusion_matrix
 from torch.utils.tensorboard import SummaryWriter
 import glob
 import shutil
 import numpy as np
+from torchvision.models import vgg19_bn
+import numpy as np
+import seaborn as sns
 from covct import CovidCTDataset
 
 random.seed(0)
@@ -49,7 +54,7 @@ if __name__ == '__main__':
     #     plt.imshow(image)
     # plt.show()
 
-    normalize = transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1])
+    normalize = transforms.Normalize(mean=[0.55, 0.45, 0.5], std=[0.12, 0.1, 0.15])
     train_transformer = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
@@ -94,5 +99,7 @@ if __name__ == '__main__':
     print(image)
     imshow(image)
     print(label)
+
+
 
 
