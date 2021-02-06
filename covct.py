@@ -131,7 +131,8 @@ def compute_metrics(model, test_loader, device, plot_roc_curve=False):
         plt.show()
 
     # put together values
-    metrics_dict = {"Accuracy": accuracy,
+    metrics_dict = {
+                    "Accuracy": accuracy,
                     "Sensitivity": sensitivity,
                     "Specificity": specificity,
                     "Roc_score": roc_score,

@@ -26,6 +26,7 @@ from earlystop import EarlyStopping
 
 random.seed(0)
 
+# PARAMETERS
 log_dir = "~/logs"
 writer = SummaryWriter(log_dir)
 PATH = './data/covct/'
@@ -33,31 +34,11 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 CLASSES = ['CT_NonCOVID', 'CT_COVID']
 
 
-
-def imshow(img):
-    # img = img / 5 + 1     # unnormalize
-
-    plt.figure(figsize=(20, 10))
-    columns = 5
-    for i, image in enumerate(img):
-        plt.subplot(int(len(img) / columns) + 1, columns, i + 1)
-        plt.imshow(image[0])
-    plt.show()
-
-
 if __name__ == '__main__':
     covid_files_path = PATH + "CT_COVID"
     nocov_files_path = PATH + "CT_NonCOVID"
-    # covid_files = [os.path.join(covid_files_path, x) for x in os.listdir(covid_files_path)]
-    # covid_images = [cv2.imread(x) for x in random.sample(covid_files, 5)]
 
-    # plt.figure(figsize=(20, 10))
-    # columns = 5
-    # for i, image in enumerate(covid_images):
-    #     plt.subplot(int(len(covid_images) / columns) + 1, columns, i + 1)
-    #     plt.imshow(image)
-    # plt.show()
-
+    # NORMALIZATION AND TRANSFORMERS
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     train_transformer = transforms.Compose([
         transforms.Resize(256),
@@ -72,6 +53,7 @@ if __name__ == '__main__':
         normalize
     ])
 
+    # DATASET AND DATALOADER CREATION
     batchsize = 8
     trainset = CovidCTDataset(root_dir=PATH,
                               classes=CLASSES,
@@ -100,34 +82,28 @@ if __name__ == '__main__':
     data = diter_train.__next__()
     image = data["img"]
     label = data["label"]
-    # print(image)
-    # imshow(image)
-    # print(label)
 
+    # CONSTRUCT MODELS
     input_tensor = image[0]
     input_batch = input_tensor.unsqueeze(0)
 
     # model = vgg16(pretrained=True)
     # model = resnet18(pretrained=True)
     model = resnet50(pretrained=True)
-    # model.eval()
 
     # model.classifier[6] = nn.Linear(4096, 2)
     input_batch = input_batch.to(DEVICE)
     model.to(DEVICE)
 
-    # with torch.no_grad():
-    #     output = model(input_batch)
-
+    # OPTIMIZATION DATA
     learning_rate = 0.01
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
-    # TRAINING LOOP
-    best_model = model
+    optimal_model = model
     best_val_score = 0
-
     criterion = nn.CrossEntropyLoss()
 
+    # TRAINING LOOP
     for epoch in range(60):
 
         model.train()
@@ -145,7 +121,7 @@ if __name__ == '__main__':
             train_loss += loss.item()
             loss.backward()
 
-            # Perform gradient udpate
+            # Perform gradient udpate       DONE AT INTERVALS OF 8 FOR THE SAKE OF THE RTX 2060 GPU.
             if iter_num % 8 == 0:
                 optimizer.step()
                 optimizer.zero_grad()
@@ -156,21 +132,21 @@ if __name__ == '__main__':
 
         # Compute and print the performance metrics
         metrics_dict = compute_metrics(model, val_loader, DEVICE)
-        print('------------------ Epoch {} Iteration {}--------------------------------------'.format(epoch, iter_num))
-        print("Accuracy \t {:.3f}".format(metrics_dict['Accuracy']))
-        print("Sensitivity \t {:.3f}".format(metrics_dict['Sensitivity']))
-        print("Specificity \t {:.3f}".format(metrics_dict['Specificity']))
-        print("Area Under ROC \t {:.3f}".format(metrics_dict['Roc_score']))
-        print("Val Loss \t {}".format(metrics_dict["Validation Loss"]))
-        print("------------------------------------------------------------------------------")
+        # print('------------------ Epoch {} Iteration {}--------------------------------------'.format(epoch, iter_num))
+        # print("Accuracy \t {:.3f}".format(metrics_dict['Accuracy']))
+        # print("Sensitivity \t {:.3f}".format(metrics_dict['Sensitivity']))
+        # print("Specificity \t {:.3f}".format(metrics_dict['Specificity']))
+        # print("Area Under ROC \t {:.3f}".format(metrics_dict['Roc_score']))
+        # print("Val Loss \t {}".format(metrics_dict["Validation Loss"]))
+        # print("------------------------------------------------------------------------------")
 
         # Save the model with best validation accuracy
         if metrics_dict['Accuracy'] > best_val_score:
-            torch.save(model, "best_model.pkl")
+            torch.save(model, "best_model.pkl")                 # Now using torch.save()
             best_val_score = metrics_dict['Accuracy']
 
         # print the metrics for training data for the epoch
-        print('\nTraining Performance Epoch {}: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        print('\nTraining Performance Epoch {}: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
             epoch, train_loss / len(train_loader.dataset), train_correct, len(train_loader.dataset),
                    100.0 * train_correct / len(train_loader.dataset)))
 
@@ -196,3 +172,4 @@ if __name__ == '__main__':
                 param_group['lr'] = learning_rate
                 print('Updating the learning rate to {}'.format(learning_rate))
                 early_stopper.reset()
+
