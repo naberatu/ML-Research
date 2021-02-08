@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
@@ -35,11 +37,15 @@ CLASSES = ['CT_NonCOVID', 'CT_COVID']
 
 
 if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
     covid_files_path = PATH + "CT_COVID"
     nocov_files_path = PATH + "CT_NonCOVID"
 
     # NORMALIZATION AND TRANSFORMERS
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    # normalize = transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1])       # Use this for finding Normalization.
+    # normalize = transforms.Normalize(mean=[0.628, 0.614, 0.581], std=[0.302, 0.320, 0.341])         # Prev. Normalization
+    # normalize = transforms.Normalize(mean=[0.629, 0.627, 0.628], std=[0.302, 0.302, 0.302])         # The normalization we will use.
+    normalize = transforms.Normalize(mean=0.6292, std=0.3024)         # The normalization we will use.
     train_transformer = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
@@ -75,101 +81,163 @@ if __name__ == '__main__':
     val_loader = DataLoader(valset, batch_size=batchsize, drop_last=False, shuffle=False)
     test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False)
 
-    diter_train = iter(train_loader)
-    diter_val = iter(val_loader)
-    diter_test = iter(test_loader)
+    #
+    # ==========================================
+    # NORMALIZATION CODE
+    # ==========================================
+    #
 
-    data = diter_train.__next__()
-    image = data["img"]
-    label = data["label"]
+    # batchsize = len(trainset)
+    # loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=1)
 
-    # CONSTRUCT MODELS
-    input_tensor = image[0]
-    input_batch = input_tensor.unsqueeze(0)
+    # data = next(iter(loader))
+    # print(data["img"].mean(), data["img"].std())
 
-    # model = vgg16(pretrained=True)
-    # model = resnet18(pretrained=True)
-    model = resnet50(pretrained=True)
+    #
+    # ==========================================
+    # TRAINING CODE
+    # ==========================================
+    #
 
-    # model.classifier[6] = nn.Linear(4096, 2)
-    input_batch = input_batch.to(DEVICE)
-    model.to(DEVICE)
+    # data = next(iter(train_loader))
+    # image = data["img"][0]
+    #
+    # # CONSTRUCT MODELS
+    # input_tensor = image
+    # input_batch = input_tensor.unsqueeze(0)
+    #
+    # # model = vgg16(pretrained=False)
+    # # model_name = "m_vgg16.pkl"
+    # # model = resnet18(pretrained=False)
+    # # model_name = "m_resnet18.pkl"
+    # model = resnet50(pretrained=False)
+    model_name = "m_resnet50.pkl"
+    #
+    # if model_name == "m_vgg16.pkl":
+    #     model.classifier[6] = nn.Linear(4096, 2)
+    # input_batch = input_batch.to(DEVICE)
+    # model.to(DEVICE)
+    #
+    # # OPTIMIZATION DATA
+    # learning_rate = 0.01
+    # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    #
+    # best_val_score = 0
+    # criterion = nn.CrossEntropyLoss()
+    #
+    # # TRAINING LOOP
+    # for epoch in range(60):
+    #
+    #     model.train()
+    #     train_loss = 0
+    #     train_correct = 0
+    #
+    #     for iter_num, data in enumerate(train_loader):
+    #         image, target = data['img'].to(DEVICE), data['label'].to(DEVICE)
+    #
+    #         # Compute the loss
+    #         output = model(image)
+    #         loss = criterion(output, target.long()) / 8
+    #
+    #         # Log loss
+    #         train_loss += loss.item()
+    #         loss.backward()
+    #
+    #         # Perform gradient udpate       DONE AT INTERVALS OF 8 FOR THE SAKE OF THE RTX 2060 GPU.
+    #         if iter_num % 8 == 0:
+    #             optimizer.step()
+    #             optimizer.zero_grad()
+    #
+    #         # Calculate the number of correctly classified examples
+    #         pred = output.argmax(dim=1, keepdim=True)
+    #         train_correct += pred.eq(target.long().view_as(pred)).sum().item()
+    #
+    #     # Compute and print the performance metrics
+    #     metrics_dict = compute_metrics(model, val_loader, DEVICE)
+    #     print('\n------------------ Epoch {} --------------------------------------'.format(epoch))
+    #     # print("Accuracy \t {:.3f}".format(metrics_dict['Accuracy']))
+    #     # print("Sensitivity \t {:.3f}".format(metrics_dict['Sensitivity']))
+    #     # print("Specificity \t {:.3f}".format(metrics_dict['Specificity']))
+    #     print("Area Under ROC \t {:.3f}".format(metrics_dict['Roc_score']))
+    #     # print("Val Loss \t {}".format(metrics_dict["Validation Loss"]))
+    #     # print("------------------------------------------------------------------")
+    #
+    #     # Save the model with best validation accuracy
+    #     if metrics_dict['Accuracy'] > best_val_score:
+    #         torch.save(model, model_name)                 # Now using torch.save()
+    #         best_val_score = metrics_dict['Accuracy']
+    #
+    #     # print the metrics for training data for the epoch
+    #     # print('Training Performance Epoch {}: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
+    #         # epoch, train_loss / len(train_loader.dataset), train_correct, len(train_loader.dataset),
+    #     print('Average loss: \t{:.4f}\nAccuracy: \t\t{}/{} ({:.0f}%)'.format(
+    #         train_loss / len(train_loader.dataset), train_correct, len(train_loader.dataset),
+    #         100.0 * train_correct / len(train_loader.dataset)))
+    #     print("-----------------------------------------------------------------")
+    #
+    #     # log the accuracy and losses in tensorboard
+    #     writer.add_scalars("Losses", {'Train loss': train_loss / len(train_loader),
+    #                                   'Validation_loss': metrics_dict["Validation Loss"]},
+    #                        epoch)
+    #     writer.add_scalars("Accuracies", {"Train Accuracy": 100.0 * train_correct / len(train_loader.dataset),
+    #                                       "Valid Accuracy": 100.0 * metrics_dict["Accuracy"]}, epoch)
+    #
+    #     early_stopper = EarlyStopping(patience=5)
+    #     # Add data to the EarlyStopper object
+    #     early_stopper.add_data(model, metrics_dict['Validation Loss'], metrics_dict['Accuracy'])
+    #
+    #     # If both accuracy and loss are not improving, stop the training
+    #     if early_stopper.stop() == 1:
+    #         break
+    #
+    #     # if only loss is not improving, lower the learning rate
+    #     if early_stopper.stop() == 3:
+    #         for param_group in optimizer.param_groups:
+    #             learning_rate *= 0.1
+    #             param_group['lr'] = learning_rate
+    #             print('Updating the learning rate to {}'.format(learning_rate))
+    #             early_stopper.reset()
 
-    # OPTIMIZATION DATA
-    learning_rate = 0.01
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    #
+    # ==========================================
+    # TESTING CODE
+    # ==========================================
+    #
 
-    optimal_model = model
-    best_val_score = 0
-    criterion = nn.CrossEntropyLoss()
+    model = torch.load(model_name)
+    correct, total = 0, 0
 
-    # TRAINING LOOP
-    for epoch in range(60):
+    with torch.no_grad():
+        for data in test_loader:
+            images = data["img"]
+            labels = data["label"]
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
 
-        model.train()
-        train_loss = 0
-        train_correct = 0
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
 
-        for iter_num, data in enumerate(train_loader):
-            image, target = data['img'].to(DEVICE), data['label'].to(DEVICE)
+    # Calculating Accuracies
+    class_correct = list(0. for i in range(2))
+    class_total = list(0. for i in range(2))
 
-            # Compute the loss
-            output = model(image)
-            loss = criterion(output, target.long()) / 8
+    with torch.no_grad():
+        for data in test_loader:
+            images = data["img"]
+            labels = data["label"]
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
 
-            # Log loss
-            train_loss += loss.item()
-            loss.backward()
+            outputs = model(images)
+            _, predicted = torch.max(outputs, 1)
+            c = (predicted == labels).squeeze()
+            for i in range(2):
+                label = labels[i]
+                class_correct[label] += c[i].item()
+                class_total[label] += 1
 
-            # Perform gradient udpate       DONE AT INTERVALS OF 8 FOR THE SAKE OF THE RTX 2060 GPU.
-            if iter_num % 8 == 0:
-                optimizer.step()
-                optimizer.zero_grad()
+    print('| Accuracy of %8s : %2d %%' % (CLASSES[0], 100 * class_correct[0] / class_total[0]))
+    print('| Accuracy of %8s : %2d %%' % (CLASSES[1], 100 * class_correct[1] / class_total[1]))
 
-            # Calculate the number of correctly classified examples
-            pred = output.argmax(dim=1, keepdim=True)
-            train_correct += pred.eq(target.long().view_as(pred)).sum().item()
 
-        # Compute and print the performance metrics
-        metrics_dict = compute_metrics(model, val_loader, DEVICE)
-        # print('------------------ Epoch {} Iteration {}--------------------------------------'.format(epoch, iter_num))
-        # print("Accuracy \t {:.3f}".format(metrics_dict['Accuracy']))
-        # print("Sensitivity \t {:.3f}".format(metrics_dict['Sensitivity']))
-        # print("Specificity \t {:.3f}".format(metrics_dict['Specificity']))
-        # print("Area Under ROC \t {:.3f}".format(metrics_dict['Roc_score']))
-        # print("Val Loss \t {}".format(metrics_dict["Validation Loss"]))
-        # print("------------------------------------------------------------------------------")
-
-        # Save the model with best validation accuracy
-        if metrics_dict['Accuracy'] > best_val_score:
-            torch.save(model, "best_model.pkl")                 # Now using torch.save()
-            best_val_score = metrics_dict['Accuracy']
-
-        # print the metrics for training data for the epoch
-        print('\nTraining Performance Epoch {}: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-            epoch, train_loss / len(train_loader.dataset), train_correct, len(train_loader.dataset),
-                   100.0 * train_correct / len(train_loader.dataset)))
-
-        # log the accuracy and losses in tensorboard
-        writer.add_scalars("Losses", {'Train loss': train_loss / len(train_loader),
-                                      'Validation_loss': metrics_dict["Validation Loss"]},
-                           epoch)
-        writer.add_scalars("Accuracies", {"Train Accuracy": 100.0 * train_correct / len(train_loader.dataset),
-                                          "Valid Accuracy": 100.0 * metrics_dict["Accuracy"]}, epoch)
-
-        early_stopper = EarlyStopping(patience=5)
-        # Add data to the EarlyStopper object
-        early_stopper.add_data(model, metrics_dict['Validation Loss'], metrics_dict['Accuracy'])
-
-        # If both accuracy and loss are not improving, stop the training
-        if early_stopper.stop() == 1:
-            break
-
-        # if only loss is not improving, lower the learning rate
-        if early_stopper.stop() == 3:
-            for param_group in optimizer.param_groups:
-                learning_rate *= 0.1
-                param_group['lr'] = learning_rate
-                print('Updating the learning rate to {}'.format(learning_rate))
-                early_stopper.reset()
 

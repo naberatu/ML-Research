@@ -18,7 +18,6 @@ from skimage.util import montage
 from sklearn.metrics import classification_report, roc_auc_score, roc_curve, confusion_matrix
 
 
-
 def read_txt(txt_path):
     with open(txt_path) as f:
         lines = f.readlines()
@@ -37,7 +36,7 @@ class CovidCTDataset(Dataset):
         covid_files = read_txt(covid_files)
         non_covid_files = read_txt(non_covid_files)
 
-        # combine the positive and negative files into a cummulative files list
+        # combine the positive and negative files into a cumulative files list
         for cls_index in range(len(self.classes)):
             class_files = [[os.path.join(self.root_dir, self.classes[cls_index], x), cls_index] \
                            for x in read_txt(self.files_path[cls_index])]
