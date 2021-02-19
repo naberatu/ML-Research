@@ -33,19 +33,20 @@ log_dir = "~/logs"
 writer = SummaryWriter(log_dir)
 PATH = './data/covct/'
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-CLASSES = ['CT_NonCOVID', 'CT_COVID']
+# CLASSES = ['CT_NonCOVID', 'CT_COVID']       # Group 1 Distinctions
+CLASSES = ['new_CT_NC', 'new_CT_CO']       # Group 2 Distinctions
 
 
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
-    covid_files_path = PATH + "CT_COVID"
-    nocov_files_path = PATH + "CT_NonCOVID"
+    # nocov_files_path = PATH + "CT_NonCOVID"
+    # covid_files_path = PATH + "CT_COVID"
+    nocov_files_path = PATH + CLASSES[0]
+    covid_files_path = PATH + CLASSES[1]
 
     # NORMALIZATION AND TRANSFORMERS
-    # normalize = transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1])       # Use this for finding Normalization.
-    # normalize = transforms.Normalize(mean=[0.628, 0.614, 0.581], std=[0.302, 0.320, 0.341])         # Prev. Normalization
-    # normalize = transforms.Normalize(mean=[0.629, 0.627, 0.628], std=[0.302, 0.302, 0.302])         # The normalization we will use.
-    normalize = transforms.Normalize(mean=0.6292, std=0.3024)         # The normalization we will use.
+    # normalize = transforms.Normalize(mean=0.6292, std=0.3024)       # Group 1 Normalization.
+    normalize = transforms.Normalize(mean=0.611, std=0.273)                 # Group 2 Normalization
     train_transformer = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
@@ -61,6 +62,8 @@ if __name__ == '__main__':
 
     # DATASET AND DATALOADER CREATION
     batchsize = 8
+
+    # GROUP 1 (425 TRAINING IMAGES)
     trainset = CovidCTDataset(root_dir=PATH,
                               classes=CLASSES,
                               covid_files=PATH + 'Data-split/COVID/trainCT_COVID.txt',
@@ -72,10 +75,27 @@ if __name__ == '__main__':
                             non_covid_files=PATH + 'Data-split/NonCOVID/valCT_NonCOVID.txt',
                             transform=val_transformer)
     testset = CovidCTDataset(root_dir=PATH,
-                             classes=['CT_NonCOVID', 'CT_COVID'],
+                             classes=CLASSES,
                              covid_files=PATH + 'Data-split/COVID/testCT_COVID.txt',
                              non_covid_files=PATH + 'Data-split/NonCOVID/testCT_NonCOVID.txt',
                              transform=val_transformer)
+
+    # GROUP 2 (2400 TOTAL IMAGES)
+    # trainset = CovidCTDataset(root_dir=PATH,
+    #                           classes=CLASSES,
+    #                           covid_files=PATH + 'Data-split/COVID/new_CT_CO_train.txt',
+    #                           non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_train.txt',
+    #                           transform=train_transformer)
+    # valset = CovidCTDataset(root_dir=PATH,
+    #                         classes=CLASSES,
+    #                         covid_files=PATH + 'Data-split/COVID/new_CT_CO_val.txt',
+    #                         non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_val.txt',
+    #                         transform=val_transformer)
+    # testset = CovidCTDataset(root_dir=PATH,
+    #                          classes=CLASSES,
+    #                          covid_files=PATH + 'Data-split/COVID/new_CT_CO_test.txt',
+    #                          non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_test.txt',
+    #                          transform=val_transformer)
 
     train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True)
     val_loader = DataLoader(valset, batch_size=batchsize, drop_last=False, shuffle=False)
@@ -89,7 +109,7 @@ if __name__ == '__main__':
 
     # batchsize = len(trainset)
     # loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=1)
-
+    #
     # data = next(iter(loader))
     # print(data["img"].mean(), data["img"].std())
 
@@ -101,20 +121,22 @@ if __name__ == '__main__':
 
     # data = next(iter(train_loader))
     # image = data["img"][0]
-    #
+
     # # CONSTRUCT MODELS
     # input_tensor = image
     # input_batch = input_tensor.unsqueeze(0)
     #
-    # # model = vgg16(pretrained=False)
-    # # model_name = "m_vgg16.pkl"
-    # # model = resnet18(pretrained=False)
-    # # model_name = "m_resnet18.pkl"
+    # model_name = "m_vgg16.pkl"
+    # model = vgg16(pretrained=False)
+    # model_name = "m_resnet50.pkl"
     # model = resnet50(pretrained=False)
-    model_name = "m_resnet50.pkl"
+    model_name = "m_resnet18.pkl"
+    # model = resnet18(pretrained=False)
+
+    model = torch.load(model_name)
     #
-    # if model_name == "m_vgg16.pkl":
-    #     model.classifier[6] = nn.Linear(4096, 2)
+    # # if model_name == "m_vgg16.pkl":
+    # #     model.classifier[6] = nn.Linear(4096, 2)
     # input_batch = input_batch.to(DEVICE)
     # model.to(DEVICE)
     #
@@ -154,13 +176,8 @@ if __name__ == '__main__':
     #
     #     # Compute and print the performance metrics
     #     metrics_dict = compute_metrics(model, val_loader, DEVICE)
-    #     print('\n------------------ Epoch {} --------------------------------------'.format(epoch))
-    #     # print("Accuracy \t {:.3f}".format(metrics_dict['Accuracy']))
-    #     # print("Sensitivity \t {:.3f}".format(metrics_dict['Sensitivity']))
-    #     # print("Specificity \t {:.3f}".format(metrics_dict['Specificity']))
+    #     print('\n------------------ Epoch {} -------------------------------------'.format(epoch))
     #     print("Area Under ROC \t {:.3f}".format(metrics_dict['Roc_score']))
-    #     # print("Val Loss \t {}".format(metrics_dict["Validation Loss"]))
-    #     # print("------------------------------------------------------------------")
     #
     #     # Save the model with best validation accuracy
     #     if metrics_dict['Accuracy'] > best_val_score:
@@ -168,8 +185,6 @@ if __name__ == '__main__':
     #         best_val_score = metrics_dict['Accuracy']
     #
     #     # print the metrics for training data for the epoch
-    #     # print('Training Performance Epoch {}: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-    #         # epoch, train_loss / len(train_loader.dataset), train_correct, len(train_loader.dataset),
     #     print('Average loss: \t{:.4f}\nAccuracy: \t\t{}/{} ({:.0f}%)'.format(
     #         train_loss / len(train_loader.dataset), train_correct, len(train_loader.dataset),
     #         100.0 * train_correct / len(train_loader.dataset)))
@@ -177,8 +192,7 @@ if __name__ == '__main__':
     #
     #     # log the accuracy and losses in tensorboard
     #     writer.add_scalars("Losses", {'Train loss': train_loss / len(train_loader),
-    #                                   'Validation_loss': metrics_dict["Validation Loss"]},
-    #                        epoch)
+    #                                   'Validation_loss': metrics_dict["Validation Loss"]}, epoch)
     #     writer.add_scalars("Accuracies", {"Train Accuracy": 100.0 * train_correct / len(train_loader.dataset),
     #                                       "Valid Accuracy": 100.0 * metrics_dict["Accuracy"]}, epoch)
     #
@@ -204,7 +218,6 @@ if __name__ == '__main__':
     # ==========================================
     #
 
-    model = torch.load(model_name)
     correct, total = 0, 0
 
     with torch.no_grad():

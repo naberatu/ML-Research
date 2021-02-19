@@ -38,8 +38,7 @@ class CovidCTDataset(Dataset):
 
         # combine the positive and negative files into a cumulative files list
         for cls_index in range(len(self.classes)):
-            class_files = [[os.path.join(self.root_dir, self.classes[cls_index], x), cls_index] \
-                           for x in read_txt(self.files_path[cls_index])]
+            class_files = [[os.path.join(self.root_dir, self.classes[cls_index], x), cls_index] for x in read_txt(self.files_path[cls_index])]
             self.image_list += class_files
 
         self.transform = transform
