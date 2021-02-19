@@ -1,12 +1,15 @@
 # Pytorch
-Just for experimenting with neural networks in Python. 
+For research and experimentation purposes with Pytorch. 
 
 # Networks Experimented with: 
++ ResNet-18
++ ResNet-50
++ VGG-16
 + Simple Convolutional Neural Networks (CNN)
-+ ResNet
 + AlexNet
 
 # Datasets tested: 
++ Covid CT Scans 
 + CIFAR-10
 + STL-10
 + CelebA
