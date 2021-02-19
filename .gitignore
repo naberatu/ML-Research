@@ -1,2 +1,3 @@
 /data/
-./*.pkl
+m_vgg16.pkl
+m_resnet50.pkl
