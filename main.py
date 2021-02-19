@@ -33,20 +33,18 @@ log_dir = "~/logs"
 writer = SummaryWriter(log_dir)
 PATH = './data/covct/'
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# CLASSES = ['CT_NonCOVID', 'CT_COVID']       # Group 1 Distinctions
-CLASSES = ['new_CT_NC', 'new_CT_CO']       # Group 2 Distinctions
+CLASSES = ['CT_NonCOVID', 'CT_COVID']       # Group 1 Distinctions
+# CLASSES = ['new_CT_NC', 'new_CT_CO']       # Group 2 Distinctions
 
 
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
-    # nocov_files_path = PATH + "CT_NonCOVID"
-    # covid_files_path = PATH + "CT_COVID"
     nocov_files_path = PATH + CLASSES[0]
     covid_files_path = PATH + CLASSES[1]
 
     # NORMALIZATION AND TRANSFORMERS
-    # normalize = transforms.Normalize(mean=0.6292, std=0.3024)       # Group 1 Normalization.
-    normalize = transforms.Normalize(mean=0.611, std=0.273)                 # Group 2 Normalization
+    normalize = transforms.Normalize(mean=0.6292, std=0.3024)       # Group 1 Normalization.
+    # normalize = transforms.Normalize(mean=0.611, std=0.273)                 # Group 2 Normalization
     train_transformer = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
@@ -121,11 +119,11 @@ if __name__ == '__main__':
 
     # data = next(iter(train_loader))
     # image = data["img"][0]
-
+    #
     # # CONSTRUCT MODELS
     # input_tensor = image
     # input_batch = input_tensor.unsqueeze(0)
-    #
+
     # model_name = "m_vgg16.pkl"
     # model = vgg16(pretrained=False)
     # model_name = "m_resnet50.pkl"
@@ -134,14 +132,17 @@ if __name__ == '__main__':
     # model = resnet18(pretrained=False)
 
     model = torch.load(model_name)
-    #
-    # # if model_name == "m_vgg16.pkl":
-    # #     model.classifier[6] = nn.Linear(4096, 2)
+
+    # if model_name == "m_vgg16.pkl":
+    #     model.classifier[6] = nn.Linear(4096, 2)
+    # elif model_name == "m_resnet18.pkl":
+    #     model.fc = nn.Linear(512, 2)
     # input_batch = input_batch.to(DEVICE)
     # model.to(DEVICE)
     #
     # # OPTIMIZATION DATA
-    # learning_rate = 0.01
+    # # learning_rate = 0.01      # Default value.
+    # learning_rate = 0.001       # For fine tuning.
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
     #
     # best_val_score = 0
