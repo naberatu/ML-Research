@@ -41,6 +41,9 @@ class CovidCTDataset(Dataset):
             class_files = [[os.path.join(self.root_dir, self.classes[cls_index], x), cls_index] for x in read_txt(self.files_path[cls_index])]
             self.image_list += class_files
 
+        # class_files = [[os.path.join(self.root_dir, self.classes[0], x), 0] for x in read_txt(self.files_path[1])]
+        # self.image_list += class_files
+
         self.transform = transform
 
     def __len__(self):
@@ -96,19 +99,21 @@ def compute_metrics(model, test_loader, device, plot_roc_curve=False):
         val_correct += pred.eq(target.long().view_as(pred)).sum().item()
 
         # Bookkeeping
-        score_list = torch.cat([score_list, nn.Softmax(dim=1)(output)[:, 1].squeeze()])
+        # score_list = torch.cat([score_list, nn.Softmax(dim=1)(output)[:, 1].squeeze()])
+        score_list = torch.cat([score_list, nn.Softmax(dim=1)(output)[:, 0].squeeze()])
         pred_list = torch.cat([pred_list, pred.squeeze()])
         target_list = torch.cat([target_list, target.squeeze()])
 
     classification_metrics = classification_report(target_list.tolist(), pred_list.tolist(),
                                                    target_names=['CT_NonCOVID', 'CT_COVID'],
+                                                   # target_names=['CT_COVID'],
                                                    output_dict=True)
 
     # sensitivity is the recall of the positive class
-    sensitivity = classification_metrics['CT_COVID']['recall']
+    # sensitivity = classification_metrics['CT_COVID']['recall']
 
     # specificity is the recall of the negative class
-    specificity = classification_metrics['CT_NonCOVID']['recall']
+    # specificity = classification_metrics['CT_NonCOVID']['recall']
 
     # accuracy
     accuracy = classification_metrics['accuracy']
@@ -131,8 +136,8 @@ def compute_metrics(model, test_loader, device, plot_roc_curve=False):
     # put together values
     metrics_dict = {
                     "Accuracy": accuracy,
-                    "Sensitivity": sensitivity,
-                    "Specificity": specificity,
+                    # "Sensitivity": sensitivity,
+                    # "Specificity": specificity,
                     "Roc_score": roc_score,
                     "Confusion Matrix": conf_matrix,
                     "Validation Loss": val_loss / len(test_loader),

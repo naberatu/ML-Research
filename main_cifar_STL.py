@@ -1,7 +1,7 @@
 # import torch
 # import torch.nn as nn
 # import torch.optim as optim
-# from net import Net
+# from net import NaberNet
 # import torchvision
 # import torchvision.transforms as transforms
 # import numpy as np
@@ -45,7 +45,7 @@
 #
 # if __name__ == '__main__':
 #
-#     net = Net()    # Summon Neural Net
+#     net = NaberNet()    # Summon Neural NaberNet
 #
 #     # Data Iterator
 #     # ================================================================
@@ -90,7 +90,7 @@
 #     # print('Finished Training')
 #     # torch.save(net.state_dict(), PATH)
 #
-#     # Neural Net Testing
+#     # Neural NaberNet Testing
 #     # ==========================================================
 #     # net.load_state_dict(torch.load(PATH))
 #     # outputs = net(images)
