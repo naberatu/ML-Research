@@ -2,19 +2,11 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms as transforms
 import os
-import cv2
-import random
 import matplotlib.pyplot as plt
-import torch.optim as optim
 from PIL import Image
-from torch.utils.tensorboard import SummaryWriter
-import glob
-import shutil
 import numpy as np
 
-from skimage.util import montage
 from sklearn.metrics import classification_report, roc_auc_score, roc_curve, confusion_matrix
 
 
@@ -25,25 +17,22 @@ def read_txt(txt_path):
     return txt_data
 
 
-class CovidCTDataset(Dataset):
-    def __init__(self, root_dir, classes, covid_files, non_covid_files, transform=None):
+class CTXDataset(Dataset):
+    def __init__(self, root_dir, classes, splitfile, transform=None):
         self.root_dir = root_dir
         self.classes = classes
-        self.files_path = [non_covid_files, covid_files]
-        self.image_list = []
+        self.split_file = splitfile
 
-        # read the files from data split text files
-        covid_files = read_txt(covid_files)
-        non_covid_files = read_txt(non_covid_files)
+        files = read_txt(self.split_file)
+        images = []
+        for file in files:
+            img_name = file.split(" ")[0]
+            if "NCP" in img_name or "Normal" in img_name:
+                images.append((os.path.join(self.root_dir, img_name), 0))
+            else:
+                images.append([os.path.join(self.root_dir, img_name), 1])
 
-        # combine the positive and negative files into a cumulative files list
-        for cls_index in range(len(self.classes)):
-            class_files = [[os.path.join(self.root_dir, self.classes[cls_index], x), cls_index] for x in read_txt(self.files_path[cls_index])]
-            # class_files = [[os.path.join(self.root_dir, x), cls_index] for x in read_txt(self.files_path[cls_index])]
-            self.image_list += class_files
-
-        # class_files = [[os.path.join(self.root_dir, self.classes[0], x), 0] for x in read_txt(self.split_file[1])]
-        # self.image_list += class_files
+        self.image_list = np.array(images)
 
         self.transform = transform
 
@@ -63,8 +52,8 @@ class CovidCTDataset(Dataset):
         label = int(self.image_list[idx][1])
 
         data = {'img': image,
-                'label': label}
-                # 'paths': path}
+                'label': label,
+                'paths': path}
 
         return data
 
@@ -111,10 +100,10 @@ def compute_metrics(model, test_loader, device, plot_roc_curve=False):
                                                    output_dict=True)
 
     # sensitivity is the recall of the positive class
-    sensitivity = classification_metrics['CT_COVID']['recall']
+    # sensitivity = classification_metrics['CT_COVID']['recall']
 
     # specificity is the recall of the negative class
-    specificity = classification_metrics['CT_NonCOVID']['recall']
+    # specificity = classification_metrics['CT_NonCOVID']['recall']
 
     # accuracy
     accuracy = classification_metrics['accuracy']
@@ -137,8 +126,8 @@ def compute_metrics(model, test_loader, device, plot_roc_curve=False):
     # put together values
     metrics_dict = {
                     "Accuracy": accuracy,
-                    "Sensitivity": sensitivity,
-                    "Specificity": specificity,
+                    # "Sensitivity": sensitivity,
+                    # "Specificity": specificity,
                     "Roc_score": roc_score,
                     "Confusion Matrix": conf_matrix,
                     "Validation Loss": val_loss / len(test_loader),

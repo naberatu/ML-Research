@@ -9,9 +9,12 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 from torchstat import stat
+
+import ctxdataset
 from nabernet import NaberNet
 
 import os
+import shutil
 import cv2
 import random
 import matplotlib.pyplot as plt
@@ -30,7 +33,14 @@ from torchvision.models import resnet152
 
 from covct import CovidCTDataset
 from covct import compute_metrics
+from ctxdataset import CTXDataset
+from ctxdataset import compute_metrics
 from earlystop import EarlyStopping
+
+import itertools
+import threading
+import time
+import sys
 
 random.seed(0)
 
@@ -38,28 +48,75 @@ random.seed(0)
 log_dir = "~/logs"
 writer = SummaryWriter(log_dir)
 PATH = './data/covct/'
+IMGPATH = './data/CTX/'
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# CLASSES = ['CT_NonCOVID', 'CT_COVID']       # Group 1 Distinctions
-CLASSES = ['new_CT_NC', 'new_CT_CO']       # Group 2 Distinctions
+CLASSES = ['CT_NonCOVID', 'CT_COVID']       # Group 1 Distinctions
+# CLASSES = ['new_CT_NC', 'new_CT_CO']       # Group 2 Distinctions
+# CLASSES = ['CTX_NC', 'CTX_CO']       # Group 3 Distinctions
+
+IMGSIZE = 224     # For Groups 1, 2
+# IMGSIZE = 448       # For Group 3
 
 
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
-    nocov_files_path = PATH + CLASSES[0]
-    covid_files_path = PATH + CLASSES[1]
+
+    #
+    # ==========================================
+    # IMAGE-SORTING CODE
+    # ==========================================
+    #
+
+    # files = ctxdataset.read_txt('./data/CTX/test_COVIDx_CT-2A.txt')
+    # images = list()
+    # for file in files:
+    #     imgname = file.split(" ")[0]
+    #     # if "NCP" in imgname or "Normal" in imgname:
+    #     if "NCP" not in imgname and "Normal" not in imgname:
+    #         images.append('./data/CTX/2A_images_c/' + imgname)
+    #
+    # print(images[0:5])
+    #
+    # for img in images:
+    #     try:
+    #         # shutil.move(img, './data/CTX/nc_test')
+    #         shutil.move(img, './data/CTX/co_test')
+    #     except: continue
+    #
+    # print("DONE")
+
+    # #
+    # # ==========================================
+    # # NAME-READING CODE
+    # # ==========================================
+    # #
+    #
+    # a = open("./data/CTX/co_val.txt", "w")
+    # for path, subdirs, files in os.walk(r'C:/Users/elite/PycharmProjects/Pytorch/data/CTX/co_val'):
+    #     for filename in files:
+    #         a.write(str(filename + '\n'))
+    #
+    # ==========================================
+    # DATASET CODE
+    # ==========================================
+    #
+
+    print("\nConstructing Datasets...", end='\t')
 
     # NORMALIZATION AND TRANSFORMERS
     # normalize = transforms.Normalize(mean=0.6292, std=0.3024)       # Group 1 Normalization.
-    normalize = transforms.Normalize(mean=0.611, std=0.273)                 # Group 2 Normalization
+    normalize = transforms.Normalize(mean=0.611, std=0.273)         # Group 2, 3 Normalization
+    # TODO: Update Normalization values
     train_transformer = transforms.Compose([
         transforms.Resize(256),
-        transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
+        transforms.RandomResizedCrop(IMGSIZE, scale=(0.5, 1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         normalize
     ])
     val_transformer = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((IMGSIZE, IMGSIZE)),
         transforms.ToTensor(),
         normalize
     ])
@@ -68,39 +125,59 @@ if __name__ == '__main__':
     batchsize = 8
 
     # GROUP 1 (425 TRAINING IMAGES)
-    # trainset = CovidCTDataset(root_dir=PATH,
-    #                           classes=CLASSES,
-    #                           covid_files=PATH + 'Data-split/COVID/trainCT_COVID.txt',
-    #                           non_covid_files=PATH + 'Data-split/NonCOVID/trainCT_NonCOVID.txt',
-    #                           transform=train_transformer)
-    # valset = CovidCTDataset(root_dir=PATH,
-    #                         classes=CLASSES,
-    #                         covid_files=PATH + 'Data-split/COVID/valCT_COVID.txt',
-    #                         non_covid_files=PATH + 'Data-split/NonCOVID/valCT_NonCOVID.txt',
-    #                         transform=val_transformer)
-    # testset = CovidCTDataset(root_dir=PATH,
-    #                          classes=CLASSES,
-    #                          covid_files=PATH + 'Data-split/COVID/testCT_COVID.txt',
-    #                          non_covid_files=PATH + 'Data-split/NonCOVID/testCT_NonCOVID.txt',
-    #                          transform=val_transformer)
-
-    # GROUP 2 (2400 TOTAL IMAGES)
     trainset = CovidCTDataset(root_dir=PATH,
                               classes=CLASSES,
-                              covid_files=PATH + 'Data-split/COVID/new_CT_CO_train.txt',
-                              non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_train.txt',
+                              covid_files=PATH + 'Data-split/COVID/trainCT_COVID.txt',
+                              non_covid_files=PATH + 'Data-split/NonCOVID/trainCT_NonCOVID.txt',
                               transform=train_transformer)
     valset = CovidCTDataset(root_dir=PATH,
                             classes=CLASSES,
-                            covid_files=PATH + 'Data-split/COVID/new_CT_CO_val.txt',
-                            non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_val.txt',
+                            covid_files=PATH + 'Data-split/COVID/valCT_COVID.txt',
+                            non_covid_files=PATH + 'Data-split/NonCOVID/valCT_NonCOVID.txt',
                             transform=val_transformer)
     testset = CovidCTDataset(root_dir=PATH,
                              classes=CLASSES,
-                             covid_files=PATH + 'Data-split/COVID/new_CT_CO_test.txt',
-                             non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_test.txt',
+                             covid_files=PATH + 'Data-split/COVID/testCT_COVID.txt',
+                             non_covid_files=PATH + 'Data-split/NonCOVID/testCT_NonCOVID.txt',
                              transform=val_transformer)
+    #
+    # # GROUP 2 (2400 TOTAL IMAGES)
+    # trainset = CovidCTDataset(root_dir=PATH,
+    #                           classes=CLASSES,
+    #                           covid_files=PATH + 'Data-split/COVID/new_CT_CO_train.txt',
+    #                           non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_train.txt',
+    #                           transform=train_transformer)
+    # valset = CovidCTDataset(root_dir=PATH,
+    #                         classes=CLASSES,
+    #                         covid_files=PATH + 'Data-split/COVID/new_CT_CO_val.txt',
+    #                         non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_val.txt',
+    #                         transform=val_transformer)
+    # testset = CovidCTDataset(root_dir=PATH,
+    #                          classes=CLASSES,
+    #                          covid_files=PATH + 'Data-split/COVID/new_CT_CO_test.txt',
+    #                          non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_test.txt',
+    #                          transform=val_transformer)
 
+    # GROUP 3 (104,000 TOTAL IMAGES)
+    # TODO: Update the paths here.
+    # trainset = CovidCTDataset(root_dir=IMGPATH + '2A_images',
+    #                           classes=CLASSES,
+    #                           covid_files=IMGPATH + 'co_train.txt',
+    #                           non_covid_files=IMGPATH + 'nc_train.txt',
+    #                           transform=train_transformer
+    #                           )
+    # valset = CovidCTDataset(root_dir=IMGPATH + '2A_images',
+    #                         classes=CLASSES,
+    #                         covid_files=IMGPATH + 'co_val.txt',
+    #                         non_covid_files=IMGPATH + 'nc_val.txt',
+    #                         transform=val_transformer)
+    # testset = CovidCTDataset(root_dir=IMGPATH + '2A_images',
+    #                          classes=CLASSES,
+    #                          covid_files=IMGPATH + 'co_test.txt',
+    #                          non_covid_files=IMGPATH + 'nc_test.txt',
+    #                          transform=val_transformer)
+
+    print("DONE\nSetting Up DataLoaders...", end='\t')
     train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True)
     val_loader = DataLoader(valset, batch_size=batchsize, drop_last=False, shuffle=False)
     test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False)
@@ -110,11 +187,13 @@ if __name__ == '__main__':
     # NORMALIZATION CODE
     # ==========================================
     #
-
+    # print("DONE\nSetting Up Norm Loader...", end='\t')
     # batchsize = len(trainset)
-    # loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=1)
+    # loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=0)
     #
+    # print("DONE\nUsing DataLoader...", end='\t')
     # data = next(iter(loader))
+    # print("DONE")
     # print(data["img"].mean(), data["img"].std())
 
     #
@@ -122,6 +201,7 @@ if __name__ == '__main__':
     # TRAINING CODE
     # ==========================================
     #
+    print("DONE\nBeginning Model Setup...", end='\t')
 
     data = next(iter(train_loader))
     image = data["img"][0]
@@ -132,15 +212,15 @@ if __name__ == '__main__':
 
     # model_name = "m_vgg16"
     # model = vgg16(pretrained=False)
-    # model_name = "m_resnet18"
-    # model = resnet18(pretrained=False)
+    model_name = "m_resnet18"
+    model = resnet18(pretrained=False)
     # model_name = "m_resnet50"
     # model = resnet50(pretrained=False)
+    # model_name = "customnet42"
 
-    model_name = "customnet"
-    model = NaberNet()
-
-    # model = torch.load(model_name + ".tar")
+    # model = torch.load("m_resnet18.tar")
+    # model_name = "nabernet_ctx"
+    # model = NaberNet()
 
     if model_name == "m_vgg16":
         model.classifier[6] = nn.Linear(4096, 2)
@@ -157,8 +237,11 @@ if __name__ == '__main__':
     best_val_score = 0
     criterion = nn.CrossEntropyLoss()
 
+    print("DONE")
     # TRAINING LOOP
-    for epoch in range(60):
+    # for epoch in range(1, 21):
+    for epoch in range(1, 2):
+        print("\nTraining Epoch", str(epoch) + "...", end='\t')
 
         model.train()
         train_loss = 0
@@ -175,7 +258,7 @@ if __name__ == '__main__':
             train_loss += loss.item()
             loss.backward()
 
-            # Perform gradient udpate       DONE AT INTERVALS OF 8 FOR THE RTX 2060 GPU.
+            # Perform gradient update       DONE AT INTERVALS OF 8 FOR THE RTX 2060 GPU.
             if iter_num % 8 == 0:
                 optimizer.step()
                 optimizer.zero_grad()
@@ -184,11 +267,11 @@ if __name__ == '__main__':
             pred = output.argmax(dim=1, keepdim=True)
             train_correct += pred.eq(target.long().view_as(pred)).sum().item()
 
-        # Calculate performance metrics with the Validation Set:
-        # This metrics dict essentially stores the results based on the validation set.
+        # Calculate performance metrics based on the Validation Set:
         metrics_dict = compute_metrics(model, val_loader, DEVICE)
 
         # Print Results
+        print("DONE")
         print('\n------------------ Epoch {} -------------------------------------'.format(epoch))
         print("Area Under ROC \t {:.3f}".format(metrics_dict['Roc_score']))
 
@@ -232,6 +315,7 @@ if __name__ == '__main__':
     # ==========================================
     #
 
+    print("DONE\nTesting...", end='\t')
     model = torch.load(model_name + ".tar")
     model.load_state_dict(torch.load(model_name + "_dict.pth"))
     model.eval()
@@ -249,8 +333,9 @@ if __name__ == '__main__':
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    summary(model, (3, 224, 224))
-    # stat(model.cpu(), (3, 224, 224))      # TODO Use when you are on the compression stage.
+    print("DONE\n")
+    summary(model, (3, IMGSIZE, IMGSIZE))
+    # stat(model.cpu(), (3, IMGSIZE, IMGSIZE))      # TODO Use when you are on the compression stage.
 
     print("| Valid. Accuracy:  \t{:.1%}".format(best_val_score))
     print("| Testing Accuracy: \t{} /{} = {:.1%}".format(correct, total, correct/total))
