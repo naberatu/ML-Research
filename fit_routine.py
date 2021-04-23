@@ -11,10 +11,10 @@ def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criter
     for epoch in range(epochs):
         print("Epoch: ", epoch + 1)
         adjust_learning_rate(optimizer, epochs)
-        # train_accuracy1, train_accuracy5 = train(model, train_data_loader, optimizer, epoch, model_name, criterion, print_freq=print_freq)
-        # test_accuracy1, test_accuracy5 = test(model, test_data_loader, model_name, epoch=epoch, print_freq=print_freq)
-        train_accuracy1 = train(model, train_data_loader, optimizer, epoch, model_name, criterion, print_freq=print_freq)
-        test_accuracy1 = test(model, test_data_loader, model_name, epoch=epoch, print_freq=print_freq)
+        train_accuracy1, train_accuracy5 = train(model, train_data_loader, optimizer, epoch, model_name, criterion, print_freq=print_freq)
+        test_accuracy1, test_accuracy5 = test(model, test_data_loader, model_name, epoch=epoch, print_freq=print_freq)
+        # train_accuracy1 = train(model, train_data_loader, optimizer, epoch, model_name, criterion, print_freq=print_freq)
+        # test_accuracy1 = test(model, test_data_loader, model_name, epoch=epoch, print_freq=print_freq)
 
         if test_accuracy1 > best_acc:
             if save_model:
@@ -23,14 +23,14 @@ def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criter
                 best_acc = test_accuracy1
             if save_params:
                 print("=== The model parameters is saved with accuracy: {}".format(test_accuracy1))
-                params_save(model, epoch, optimizer, train_accuracy1, test_accuracy1, model_name=model_name)
-                # params_save(model, epoch, optimizer, train_accuracy1, train_accuracy5,
-                #            test_accuracy1, test_accuracy5, model_name=model_name)
+                # params_save(model, epoch, optimizer, train_accuracy1, test_accuracy1, model_name=model_name)
+                params_save(model, epoch, optimizer, train_accuracy1, train_accuracy5,
+                           test_accuracy1, test_accuracy5, model_name=model_name)
                 best_acc = test_accuracy1
     print("Finished training.")
 
-    # return train_accuracy1, train_accuracy5, test_accuracy1, test_accuracy5
-    return train_accuracy1, test_accuracy1
+    return train_accuracy1, train_accuracy5, test_accuracy1, test_accuracy5
+    # return train_accuracy1, test_accuracy1
 
 
 def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.CrossEntropyLoss(), print_freq=10):
@@ -63,10 +63,10 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
-    # top5 = AverageMeter('Acc@5', ':6.2f')
+    top5 = AverageMeter('Acc@5', ':6.2f')
     progress = ProgressMeter(len(train_data_loader), batch_time, data_time, losses, top1,
-                             prefix="Epoch: [{}]".format(epoch))
-                             # top5, prefix="Epoch: [{}]".format(epoch))
+                             # prefix="Epoch: [{}]".format(epoch))
+                             top5, prefix="Epoch: [{}]".format(epoch))
 
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -88,11 +88,11 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
         loss = criterion(output, label)
 
         # measure accuracy and record loss
-        # acc1, acc5 = accuracy(output, label, topk=(1, 5))
-        acc1 = accuracy(output, label, topk=(1, 1))
+        acc1, acc5 = accuracy(output, label, topk=(1, 5))
+        # acc1 = accuracy(output, label, topk=(1, 1))
         losses.update(loss.item(), batch.size(0))
         top1.update(acc1[0], batch.size(0))
-        # top5.update(acc5[0], batch.size(0))
+        top5.update(acc5[0], batch.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -109,18 +109,18 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
                    'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                   # 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
+                   'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
                    )
 
             logger.info(msg.format(epoch, i, len(train_data_loader),
                                         batch_time=batch_time,
                                         data_time=data_time,
                                         loss=losses,
-                                        top1=top1))
-                                        # top1=top1, top5=top5))
+                                        # top1=top1))
+                                        top1=top1, top5=top5))
 
-    # return top1.avg, top5.avg
-    return top1.avg
+    return top1.avg, top5.avg
+    # return top1.avg
 
 
 def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEntropyLoss(), print_freq=10):
@@ -147,8 +147,8 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
-    # progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, top5, prefix='Test: ')
-    progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, prefix='Test: ')
+    progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, top5, prefix='Test: ')
+    # progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, prefix='Test: ')
 
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -170,11 +170,11 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
 
         # measure accuracy and record loss
         # TODO: Try using topk=(1,2) instead of (1,5) since we have 2 classes.
-        # acc1, acc5 = accuracy(output, label, topk=(1, 5))
-        acc1 = accuracy(output, label, topk=(1, 1))
+        acc1, acc5 = accuracy(output, label, topk=(1, 5))
+        # acc1 = accuracy(output, label, topk=(1, 1))
         losses.update(loss.item(), batch.size(0))
         top1.update(acc1[0], batch.size(0))
-        # top5.update(acc5[0], batch.size(0))
+        top5.update(acc5[0], batch.size(0))
 
         # measure elapsed time
         # batch_time.update(t1 - t0)
@@ -187,14 +187,14 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         msg = ('Epoch: [{0}][{1}/{2}]\t'
                'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-               # 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
+               'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
                )
         logger.info(msg.format(epoch, i, len(test_data_loader), loss=losses,
-                               top1=top1))
-                               # top1=top1, top5=top5))
+                               # top1=top1))
+                               top1=top1, top5=top5))
 
-    # return top1.avg, top5.avg
-    return top1.avg
+    return top1.avg, top5.avg
+    # return top1.avg
 
 
 class AverageMeter(object):
@@ -230,7 +230,7 @@ class ProgressMeter(object):
 
     def print(self, batch):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
-        entries += [print(meter) for meter in self.meters]
+        entries += [str(meter) for meter in self.meters]
         print('\t'.join(entries))
 
     def _get_batch_fmtstr(self, num_batches):
@@ -278,8 +278,8 @@ def model_save(model, model_name):
     torch.save(model, file_whole)
 
 
-def params_save(model, epoch, optimizer, train_accuracy_1, test_accuracy_1, model_name):
-# def params_save(model, epoch, optimizer, train_accuracy_1, train_accuracy_5, test_accuracy_1, test_accuracy_5, model_name):
+# def params_save(model, epoch, optimizer, train_accuracy_1, test_accuracy_1, model_name):
+def params_save(model, epoch, optimizer, train_accuracy_1, train_accuracy_5, test_accuracy_1, test_accuracy_5, model_name):
     path_params = str(pathlib.Path.cwd()) + '/' + 'results'
     path_params = pathlib.Path(path_params)
     path_params.mkdir(parents=True, exist_ok=True)
@@ -290,9 +290,9 @@ def params_save(model, epoch, optimizer, train_accuracy_1, test_accuracy_1, mode
         'model_state_dict': model.module.state_dict(),
         'optimizer_stat_dict': optimizer.state_dict(),
         'top1_accuracy_train': train_accuracy_1,
-        # 'top5_accuracy_train': train_accuracy_5,
+        'top5_accuracy_train': train_accuracy_5,
         'top1_accuracy_test': test_accuracy_1,
-        # 'top5_accuracy_test': test_accuracy_5,
+        'top5_accuracy_test': test_accuracy_5,
 
     }, file_params)
 

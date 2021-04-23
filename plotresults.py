@@ -1,7 +1,12 @@
 from plotting import *
 
-TRAIN_PATH = "./logs/train_logger/__None__run___training.log"
-TEST_PATH = "./logs/test_logger/__None__run___test.log"
+# MODEL = "None"
+MODEL = "resnet18"
+# MODEL = "resnet50"
+# MODEL = "nabernet"
 
-pretty_plot(TRAIN_PATH, TEST_PATH, "resnet18_plot")
+TRAIN_PATH = "./logs/train_logger/__" + MODEL + "__run___training.log"
+TEST_PATH = "./logs/test_logger/__" + MODEL + "__run___test.log"
+
+pretty_plot(TRAIN_PATH, TEST_PATH, MODEL + "_plot")
 

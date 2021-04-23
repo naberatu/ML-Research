@@ -3,3 +3,5 @@
 /m_vgg16_dict.pth
 /*.tar
 /*.pth
+/*.csv
+/*.xml
