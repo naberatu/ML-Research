@@ -83,6 +83,7 @@ def parse_train(path_log_file):
             loss[int(epoch)].append(float(re.sub("[^0-9,.]", "",items[3][13:19])))
             acc1[int(epoch)].append(float(re.sub("[^0-9,.]", "",items[4][15:21])))
             # acc5[int(epoch)].append(float(re.sub("[^0-9,.]", "",items[5][15:21])))
+
     loss_dict = {}
     acc1_dict = {}
     # acc5_dict = {}

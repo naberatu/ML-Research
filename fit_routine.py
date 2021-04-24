@@ -9,12 +9,10 @@ def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criter
         print_freq=10, save_model=False, save_params=False, best_acc=0, model_name="None"):
 
     for epoch in range(epochs):
-        print("Epoch: ", epoch + 1)
+        print("\n==========================================\n> Starting Epoch", epoch + 1)
         adjust_learning_rate(optimizer, epochs)
         train_accuracy1, train_accuracy5 = train(model, train_data_loader, optimizer, epoch, model_name, criterion, print_freq=print_freq)
         test_accuracy1, test_accuracy5 = test(model, test_data_loader, model_name, epoch=epoch, print_freq=print_freq)
-        # train_accuracy1 = train(model, train_data_loader, optimizer, epoch, model_name, criterion, print_freq=print_freq)
-        # test_accuracy1 = test(model, test_data_loader, model_name, epoch=epoch, print_freq=print_freq)
 
         if test_accuracy1 > best_acc:
             if save_model:
@@ -23,14 +21,13 @@ def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criter
                 best_acc = test_accuracy1
             if save_params:
                 print("=== The model parameters is saved with accuracy: {}".format(test_accuracy1))
-                # params_save(model, epoch, optimizer, train_accuracy1, test_accuracy1, model_name=model_name)
                 params_save(model, epoch, optimizer, train_accuracy1, train_accuracy5,
-                           test_accuracy1, test_accuracy5, model_name=model_name)
+                            test_accuracy1, test_accuracy5, model_name=model_name)
                 best_acc = test_accuracy1
-    print("Finished training.")
+    print("> Finished training!")
 
-    return train_accuracy1, train_accuracy5, test_accuracy1, test_accuracy5
-    # return train_accuracy1, test_accuracy1
+    # return train_accuracy1, train_accuracy5, test_accuracy1, test_accuracy5
+    return train_accuracy1, test_accuracy1
 
 
 def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.CrossEntropyLoss(), print_freq=10):
@@ -39,34 +36,26 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
         path.mkdir(parents=True, exist_ok=True)
 
     except OSError:
-        print("Faild to make nested directory")
+        print("> ERROR: Failed to make nested directory")
     else:
-        print("train_logger is Created")
+        print("> Train Logger successfully created.")
     file = str(path) + "/" +"__"+model_name+"__run__"+"_training.log"
-    # path = unique_path(pathlib.Path.cwd()/'logs'/'train_logger','model_run{:03d}.log')
-    # try :
-    #     path.mkdir(parents=True, exist_ok=True)
-    # except OSError:
-    #     print("Faild to make the log file ")
-    # else :
-    #     print("Train Logger Is Created")
-    #
-    # file = str(path.mkdir(parents=True, exist_ok=True))
+
     logger = logging.getLogger(name='train')
     logger.setLevel(logging.INFO)
     fmt = logging.Formatter('%(message)s')
     file_handler = logging.FileHandler(file)
     file_handler.setFormatter(fmt)
     logger.addHandler(file_handler)
-    #logging.basicConfig(filename=model_name+"_training.log", level=logging.INFO, format='%(message)s')
+
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
     progress = ProgressMeter(len(train_data_loader), batch_time, data_time, losses, top1,
-                             # prefix="Epoch: [{}]".format(epoch))
-                             top5, prefix="Epoch: [{}]".format(epoch))
+                             prefix="Epoch: [{}]".format(epoch))
+                             # top5, prefix="Epoch: [{}]".format(epoch))
 
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -77,6 +66,7 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
     model.train()
 
     end = time.time()
+    print("> Beginning Training...")
     for i, x in enumerate(train_data_loader):
         data_time.update(time.time() - end)
 
@@ -89,7 +79,6 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, label, topk=(1, 5))
-        # acc1 = accuracy(output, label, topk=(1, 1))
         losses.update(loss.item(), batch.size(0))
         top1.update(acc1[0], batch.size(0))
         top5.update(acc5[0], batch.size(0))
@@ -109,7 +98,7 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
                    'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                   'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
+                   # 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
                    )
 
             logger.info(msg.format(epoch, i, len(train_data_loader),
@@ -118,9 +107,9 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
                                         loss=losses,
                                         # top1=top1))
                                         top1=top1, top5=top5))
+    print("> Training Complete!")
 
     return top1.avg, top5.avg
-    # return top1.avg
 
 
 def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEntropyLoss(), print_freq=10):
@@ -129,9 +118,9 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         path.mkdir(parents=True, exist_ok=True)
 
     except OSError:
-        print("Faild to make nested directory")
+        print("\n> ERROR: Failed to make nested directory")
     else:
-        print("Tests logger Folder is Created")
+        print("\n> Test Logger successfully created.")
 
     file = str(path) + "/" +"__"+model_name+"__run__"+"_test.log"
 
@@ -142,13 +131,12 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
     file_handler.setFormatter(fmt)
     logger.addHandler(file_handler)
 
-    #logging.basicConfig(filename=model_name + "_test.log", level=logging.INFO, format='%(message)s')
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
-    progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, top5, prefix='Test: ')
-    # progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, prefix='Test: ')
+    # progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, top5, prefix='Test: ')
+    progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, prefix='Test: ')
 
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -159,6 +147,8 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
     model.eval()
     with torch.no_grad():
         end = time.time()
+
+    print("> Beginning Tests...")
     for i, x in enumerate(test_data_loader):
 
         batch, label = x['img'], x['label']
@@ -169,9 +159,7 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         loss = criterion(output, label)
 
         # measure accuracy and record loss
-        # TODO: Try using topk=(1,2) instead of (1,5) since we have 2 classes.
         acc1, acc5 = accuracy(output, label, topk=(1, 5))
-        # acc1 = accuracy(output, label, topk=(1, 1))
         losses.update(loss.item(), batch.size(0))
         top1.update(acc1[0], batch.size(0))
         top5.update(acc5[0], batch.size(0))
@@ -187,14 +175,14 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         msg = ('Epoch: [{0}][{1}/{2}]\t'
                'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-               'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
+               # 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
                )
         logger.info(msg.format(epoch, i, len(test_data_loader), loss=losses,
                                # top1=top1))
                                top1=top1, top5=top5))
+    print("> Tests Complete!")
 
     return top1.avg, top5.avg
-    # return top1.avg
 
 
 class AverageMeter(object):
@@ -250,18 +238,15 @@ def accuracy(output, target, topk=(1,)):
         correct = pred.eq(target.view(1, -1).expand_as(pred))
 
         res = []
-        if maxk > 1:
-            for k in topk:
-                correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-                res.append(correct_k.mul_(100.0 / batch_size))
-        else:
-            correct_k = correct[:1].reshape(-1).float().sum(0, keepdim=True)
+        for k in topk:
+            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
+
         return res
 
 
 def adjust_learning_rate(optimizer, epoch, lr=0.001):
-    #todo 5 update_list
+    # todo 5 update_list
     lr = lr * (0.1 ** (epoch // 30))
     for param_group in optimizer.param_groups:
         param_group['lr'] = param_group['lr'] * 0.1
@@ -295,18 +280,3 @@ def params_save(model, epoch, optimizer, train_accuracy_1, train_accuracy_5, tes
         'top5_accuracy_test': test_accuracy_5,
 
     }, file_params)
-
-
-def unique_path(directory, name_pattern):
-    """
-    This is a function for a logger to build unique logger with every run we have a new logger
-
-
-
-    """
-    counter = 0
-    while True:
-        counter += 1
-        path = directory / name_pattern.format(counter)
-        if not path.exists():
-            return path
