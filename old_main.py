@@ -31,7 +31,7 @@
 # from torchvision.models import resnet101
 # from torchvision.models import resnet152
 #
-# from covct import CovidCTDataset
+# from covct import CTDataset
 # from covct import compute_metrics
 # from ctxdataset import CTXDataset
 # from ctxdataset import compute_metrics
@@ -124,52 +124,52 @@
 #     batchsize = 8
 #
 #     # GROUP 1 (425 TRAINING IMAGES)
-#     trainset = CovidCTDataset(root_dir=PATH,
+#     trainset = CTDataset(root_dir=PATH,
 #                               classes=CLASSES,
 #                               covid_files=PATH + 'Data-split/COVID/trainCT_COVID.txt',
 #                               non_covid_files=PATH + 'Data-split/NonCOVID/trainCT_NonCOVID.txt',
 #                               transform=train_transformer)
-#     valset = CovidCTDataset(root_dir=PATH,
+#     valset = CTDataset(root_dir=PATH,
 #                             classes=CLASSES,
 #                             covid_files=PATH + 'Data-split/COVID/valCT_COVID.txt',
 #                             non_covid_files=PATH + 'Data-split/NonCOVID/valCT_NonCOVID.txt',
 #                             transform=val_transformer)
-#     testset = CovidCTDataset(root_dir=PATH,
+#     testset = CTDataset(root_dir=PATH,
 #                              classes=CLASSES,
 #                              covid_files=PATH + 'Data-split/COVID/testCT_COVID.txt',
 #                              non_covid_files=PATH + 'Data-split/NonCOVID/testCT_NonCOVID.txt',
 #                              transform=val_transformer)
 #     #
 #     # # GROUP 2 (2400 TOTAL IMAGES)
-#     # trainset = CovidCTDataset(root_dir=PATH,
+#     # trainset = CTDataset(root_dir=PATH,
 #     #                           classes=CLASSES,
 #     #                           covid_files=PATH + 'Data-split/COVID/new_CT_CO_train.txt',
 #     #                           non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_train.txt',
 #     #                           transform=train_transformer)
-#     # valset = CovidCTDataset(root_dir=PATH,
+#     # valset = CTDataset(root_dir=PATH,
 #     #                         classes=CLASSES,
 #     #                         covid_files=PATH + 'Data-split/COVID/new_CT_CO_val.txt',
 #     #                         non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_val.txt',
 #     #                         transform=val_transformer)
-#     # testset = CovidCTDataset(root_dir=PATH,
+#     # testset = CTDataset(root_dir=PATH,
 #     #                          classes=CLASSES,
 #     #                          covid_files=PATH + 'Data-split/COVID/new_CT_CO_test.txt',
 #     #                          non_covid_files=PATH + 'Data-split/NonCOVID/new_CT_NC_test.txt',
 #     #                          transform=val_transformer)
 #
 #     # GROUP 3 (104,000 TOTAL IMAGES)
-#     # trainset = CovidCTDataset(root_dir=CTX_PATH + '2A_images',
+#     # trainset = CTDataset(root_dir=CTX_PATH + '2A_images',
 #     #                           classes=CLASSES,
 #     #                           covid_files=CTX_PATH + 'co_train.txt',
 #     #                           non_covid_files=CTX_PATH + 'nc_train.txt',
 #     #                           transform=train_transformer
 #     #                           )
-#     # valset = CovidCTDataset(root_dir=CTX_PATH + '2A_images',
+#     # valset = CTDataset(root_dir=CTX_PATH + '2A_images',
 #     #                         classes=CLASSES,
 #     #                         covid_files=CTX_PATH + 'co_val.txt',
 #     #                         non_covid_files=CTX_PATH + 'nc_val.txt',
 #     #                         transform=val_transformer)
-#     # testset = CovidCTDataset(root_dir=CTX_PATH + '2A_images',
+#     # testset = CTDataset(root_dir=CTX_PATH + '2A_images',
 #     #                          classes=CLASSES,
 #     #                          covid_files=CTX_PATH + 'co_test.txt',
 #     #                          non_covid_files=CTX_PATH + 'nc_test.txt',

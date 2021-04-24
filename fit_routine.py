@@ -3,13 +3,16 @@ import torch
 import torch.nn as nn
 import pathlib
 import logging
+# Fit Routine Provided by Mohammed Alnemari and modified by Nader Atout
 
 
 def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criterion=torch.nn.CrossEntropyLoss(),
         print_freq=10, save_model=False, save_params=False, best_acc=0, model_name="None"):
 
     for epoch in range(epochs):
-        print("\n==========================================\n> Starting Epoch", epoch + 1)
+        print("\n==========================================")
+        print("> Starting Epoch", epoch + 1)
+        print("==========================================")
         adjust_learning_rate(optimizer, epochs)
         train_accuracy1, train_accuracy5 = train(model, train_data_loader, optimizer, epoch, model_name, criterion, print_freq=print_freq)
         test_accuracy1, test_accuracy5 = test(model, test_data_loader, model_name, epoch=epoch, print_freq=print_freq)
@@ -24,9 +27,7 @@ def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criter
                 params_save(model, epoch, optimizer, train_accuracy1, train_accuracy5,
                             test_accuracy1, test_accuracy5, model_name=model_name)
                 best_acc = test_accuracy1
-    print("> Finished training!")
 
-    # return train_accuracy1, train_accuracy5, test_accuracy1, test_accuracy5
     return train_accuracy1, test_accuracy1
 
 
@@ -36,9 +37,9 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
         path.mkdir(parents=True, exist_ok=True)
 
     except OSError:
-        print("> ERROR: Failed to make nested directory")
+        print("\n> ERROR: Failed to make nested directory")
     else:
-        print("> Train Logger successfully created.")
+        print("\n> Train Logger successfully created.")
     file = str(path) + "/" +"__"+model_name+"__run__"+"_training.log"
 
     logger = logging.getLogger(name='train')
@@ -55,7 +56,6 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
     top5 = AverageMeter('Acc@5', ':6.2f')
     progress = ProgressMeter(len(train_data_loader), batch_time, data_time, losses, top1,
                              prefix="Epoch: [{}]".format(epoch))
-                             # top5, prefix="Epoch: [{}]".format(epoch))
 
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -66,7 +66,6 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
     model.train()
 
     end = time.time()
-    print("> Beginning Training...")
     for i, x in enumerate(train_data_loader):
         data_time.update(time.time() - end)
 
@@ -98,16 +97,13 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
                    'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                   # 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
                    )
 
             logger.info(msg.format(epoch, i, len(train_data_loader),
                                         batch_time=batch_time,
                                         data_time=data_time,
                                         loss=losses,
-                                        # top1=top1))
                                         top1=top1, top5=top5))
-    print("> Training Complete!")
 
     return top1.avg, top5.avg
 
@@ -135,7 +131,6 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
-    # progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, top5, prefix='Test: ')
     progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, prefix='Test: ')
 
     if torch.cuda.is_available():
@@ -148,7 +143,6 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
     with torch.no_grad():
         end = time.time()
 
-    print("> Beginning Tests...")
     for i, x in enumerate(test_data_loader):
 
         batch, label = x['img'], x['label']
@@ -165,7 +159,6 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         top5.update(acc5[0], batch.size(0))
 
         # measure elapsed time
-        # batch_time.update(t1 - t0)
         batch_time.update(time.time() - end)
         end_time = time.time()
 
@@ -175,12 +168,9 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         msg = ('Epoch: [{0}][{1}/{2}]\t'
                'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-               # 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'
                )
         logger.info(msg.format(epoch, i, len(test_data_loader), loss=losses,
-                               # top1=top1))
                                top1=top1, top5=top5))
-    print("> Tests Complete!")
 
     return top1.avg, top5.avg
 

@@ -20,7 +20,7 @@ def read_txt(txt_path):
 # =============================================================
 # NOTE DATASET CLASS
 # =============================================================
-class CovidCTDataset(Dataset):
+class CTDataset(Dataset):
     def __init__(self, root_dir, classes, covid_files, non_covid_files, transform=None, is_ctx=False):
         self.root_dir = root_dir
         self.classes = classes
