@@ -23,7 +23,7 @@ CTX_PATH = './data/CTX/'
 # model_name = "m_resnet50"
 # model = resnet50(pretrained=False)
 # model_name = "m_alexnet"
-# model = alexnet(pretrained=False, num_classes=2)
+# model = alexnet(pretrained=False)
 
 model_name = "nabernet"
 
