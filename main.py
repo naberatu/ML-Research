@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as transforms
 import torch.optim as optim
+import os
 from torchsummary import summary
 
 from dataset import CTDataset
@@ -12,21 +13,21 @@ from nabernet import NaberNet
 from fit_routine import *
 from plot import Plot
 
-
 ORG_PATH = './data/covct/'
 CTX_PATH = './data/CTX/'
 
 # =============================================================
 # NOTE SELECT MODEL
 # =============================================================
-model_name = "resnet18"
-model = resnet18(pretrained=False)
+# model_name = "resnet18_b2"
+# model = resnet18(pretrained=False)
 # model_name = "resnet50"
 # model = resnet50(pretrained=False)
 # model_name = "alexnet"
 # model = alexnet(pretrained=False)
 
-# model_name = "nabernet_b"
+model_name = "nabernet_b3"
+# B2 is the best, with 40 epochs.
 
 # Loading a pretrained model
 # model = torch.load(model_name + ".tar")
@@ -35,9 +36,9 @@ model = resnet18(pretrained=False)
 # =============================================================
 # NOTE SELECT DATASET
 # =============================================================
-# SET_NAME = "UCSD AI4H"              # Contains 746 images.
-SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.
-# SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.
+# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+# SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.        (Set B)
+SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 # =============================================================
 
 # =============================================================
@@ -49,21 +50,21 @@ if "UCSD" in SET_NAME:
     EPOCHS = 10
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
     if "naber" in model_name:
-        model = NaberNet(group=0)
+        model = NaberNet(0)
 if "SARS" in SET_NAME:
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
     IMGSIZE = 224
-    EPOCHS = 20
+    EPOCHS = 40
     normalize = transforms.Normalize(mean=0.611, std=0.273)
     if "naber" in model_name:
-        model = NaberNet(group=1)
+        model = NaberNet(1)
 elif "COVIDx" in SET_NAME:
     CLASSES = ['CTX_NC', 'CTX_CO']
-    IMGSIZE = 448
+    IMGSIZE = 424
     EPOCHS = 20
     normalize = transforms.Normalize(mean=0.611, std=0.273)
     if "naber" in model_name:
-        model = NaberNet(group=2)
+        model = NaberNet(2)
 # =============================================================
 
 # =============================================================
@@ -88,15 +89,30 @@ val_transformer = transforms.Compose([
 # GENERATE DATASETS
 # =============================================================
 if "UCSD" in SET_NAME:
+    # trainset = CTDataset(root_dir=ORG_PATH,
+    #                      classes=CLASSES,
+    #                      covid_files=ORG_PATH + 'Data-split/COVID/ucsd_co_train.txt',
+    #                      non_covid_files=ORG_PATH + 'Data-split/NonCOVID/ucsd_nc_train.txt',
+    #                      transform=train_transformer)
+    # testset = CTDataset(root_dir=ORG_PATH,
+    #                     classes=CLASSES,
+    #                     covid_files=ORG_PATH + 'Data-split/COVID/ucsd_co_test.txt',
+    #                     non_covid_files=ORG_PATH + 'Data-split/NonCOVID/ucsd_nc_test.txt',
+    #                     transform=val_transformer)
     trainset = CTDataset(root_dir=ORG_PATH,
                          classes=CLASSES,
-                         covid_files=ORG_PATH + 'Data-split/COVID/ucsd_co_train.txt',
-                         non_covid_files=ORG_PATH + 'Data-split/NonCOVID/ucsd_nc_train.txt',
+                         covid_files=ORG_PATH + 'Data-split/COVID/old_split/trainCT_COVID.txt',
+                         non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/trainCT_NonCOVID.txt',
                          transform=train_transformer)
+    valset = CTDataset(root_dir=ORG_PATH,
+                       classes=CLASSES,
+                       covid_files=ORG_PATH + 'Data-split/COVID/old_split/valCT_COVID.txt',
+                       non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/valCT_NonCOVID.txt',
+                       transform=val_transformer)
     testset = CTDataset(root_dir=ORG_PATH,
                         classes=CLASSES,
-                        covid_files=ORG_PATH + 'Data-split/COVID/ucsd_co_test.txt',
-                        non_covid_files=ORG_PATH + 'Data-split/NonCOVID/ucsd_nc_test.txt',
+                        covid_files=ORG_PATH + 'Data-split/COVID/old_split/testCT_COVID.txt',
+                        non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/testCT_NonCOVID.txt',
                         transform=val_transformer)
 elif "SARS" in SET_NAME:
     trainset = CTDataset(root_dir=ORG_PATH,
@@ -109,6 +125,21 @@ elif "SARS" in SET_NAME:
                         covid_files=ORG_PATH + 'Data-split/COVID/sarsct_co_test.txt',
                         non_covid_files=ORG_PATH + 'Data-split/NonCOVID/sarsct_nc_test.txt',
                         transform=val_transformer)
+    # trainset = CTDataset(root_dir=ORG_PATH,
+    #                      classes=CLASSES,
+    #                      covid_files=ORG_PATH + 'Data-split/COVID/old_split/new_CT_CO_train.txt',
+    #                      non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/new_CT_NC_train.txt',
+    #                      transform=train_transformer)
+    # valset = CTDataset(root_dir=ORG_PATH,
+    #                    classes=CLASSES,
+    #                    covid_files=ORG_PATH + 'Data-split/COVID/old_split/new_CT_CO_val.txt',
+    #                    non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/new_CT_NC_val.txt',
+    #                    transform=val_transformer)
+    # testset = CTDataset(root_dir=ORG_PATH,
+    #                     classes=CLASSES,
+    #                     covid_files=ORG_PATH + 'Data-split/COVID/old_split/new_CT_CO_test.txt',
+    #                     non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/new_CT_NC_test.txt',
+    #                     transform=val_transformer)
 elif "COVIDx" in SET_NAME:
     trainset = CTDataset(root_dir=CTX_PATH + '2A_images',
                          classes=CLASSES,
@@ -116,6 +147,11 @@ elif "COVIDx" in SET_NAME:
                          non_covid_files=CTX_PATH + 'nc_train.txt',
                          transform=train_transformer,
                          is_ctx=True)
+    valset = CTDataset(root_dir=CTX_PATH + '2A_images',
+                       classes=CLASSES,
+                       covid_files=CTX_PATH + 'co_val.txt',
+                       non_covid_files=CTX_PATH + 'nc_val.txt',
+                       transform=val_transformer)
     testset = CTDataset(root_dir=CTX_PATH + '2A_images',
                         classes=CLASSES,
                         covid_files=CTX_PATH + 'co_test.txt',
@@ -127,8 +163,9 @@ elif "COVIDx" in SET_NAME:
 # =============================================================
 # CREATE DATA-LOADERS FOR ALL SETS
 # =============================================================
-train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=2)
-test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=2)
+train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=1)
+# val_loader = DataLoader(valset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
+test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
 # =============================================================
 
 # =============================================================
@@ -148,14 +185,39 @@ if __name__ == '__main__':
     print("SELECTED MODEL: \t", model_name)
     print("SELECTED DATASET: \t", SET_NAME)
     print("EXPECTED EPOCHS: \t", EPOCHS)
+
+    # ENSURES THAT THE RIGHT LOG FILES ARE MADE & USED.
+    # NOTE to self, if you're gonna retest a model, erase its log first.
+    TRAIN_PATH = "./logs/train_logger/__" + model_name + "__run___training.log"
+    TEST_PATH = "./logs/test_logger/__" + model_name + "__run___test.log"
+    TEST2_PATH = "./logs/test_logger/--" + model_name + "__split___test.log"
+    PLOT_PATH = "./figures/" + model_name + "_plot.png"
+
+    flag = False
+    if os.path.exists(TRAIN_PATH):
+        os.remove(TRAIN_PATH)
+        flag = True
+    if os.path.exists(TEST_PATH):
+        os.remove(TEST_PATH)
+        flag = True
+    if os.path.exists(TEST2_PATH):
+        os.remove(TEST2_PATH)
+        flag = True
+    if os.path.exists(PLOT_PATH):
+        os.remove(PLOT_PATH)
+        flag = True
+
+    if flag:
+        print("PRE-EXISTING LOGS: \t CLEARED")
     print("==========================================")
 
     # RUNS ALL TRAINING AND TESTS.
     fit(model, train_loader, test_loader, optimizer, epochs=EPOCHS, model_name=model_name)
+    print("\n> All Epochs completed!")
+    # print("\n> Performing final test...")
+    # test(model, test_loader, model_name, epoch=1, valsplit=True)
+    # print("\n> Test Complete.")
 
-    # print("\n> All Epochs completed!")
-    print("\n> Drawing Plot...")
-
-    # DRAWS GRAPH PY-PLOT.
+    print("\n> Generating Plots...")
     Plot(model_name).plot()
     print("> Plot Closed.")

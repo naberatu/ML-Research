@@ -29,6 +29,7 @@ def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criter
                 best_acc = test_accuracy1
 
     return train_accuracy1, test_accuracy1
+    # return train_accuracy1, test_accuracy1, train_accuracy5, test_accuracy5
 
 
 def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.CrossEntropyLoss(), print_freq=10):
@@ -97,6 +98,7 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
                    'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                   'Prec@5 {top1.val:.3f} ({top1.avg:.3f})\t'
                    )
 
             logger.info(msg.format(epoch, i, len(train_data_loader),
@@ -104,11 +106,13 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
                                         data_time=data_time,
                                         loss=losses,
                                         top1=top1, top5=top5))
+                                        # top1=top1))
 
     return top1.avg, top5.avg
+    # return top1.avg
 
 
-def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEntropyLoss(), print_freq=10):
+def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEntropyLoss(), print_freq=10, valsplit=False):
     path = pathlib.Path('./logs/test_logger')
     try:
         path.mkdir(parents=True, exist_ok=True)
@@ -118,6 +122,9 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
     else:
         print("\n> Test Logger successfully created.")
 
+    # if valsplit:
+    #     file = str(path) + "/" +"--"+model_name+"__split__"+"_test.log"
+    # else:
     file = str(path) + "/" +"__"+model_name+"__run__"+"_test.log"
 
     logger = logging.getLogger(name='test')
@@ -168,11 +175,13 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         msg = ('Epoch: [{0}][{1}/{2}]\t'
                'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+               'Prec@5 {top1.val:.3f} ({top1.avg:.3f})\t'
                )
-        logger.info(msg.format(epoch, i, len(test_data_loader), loss=losses,
-                               top1=top1, top5=top5))
+        logger.info(msg.format(epoch, i, len(test_data_loader), loss=losses, batch_time=batch_time, top1=top1, top5=top5))
+        # logger.info(msg.format(epoch, i, len(test_data_loader), loss=losses, batch_time=batch_time, top1=top1))
 
     return top1.avg, top5.avg
+    # return top1.avg
 
 
 class AverageMeter(object):

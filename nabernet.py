@@ -5,9 +5,14 @@ import torch.nn.functional as F
 # =============================================================
 # MODEL LAYER PARAMETERS
 # =============================================================
-cdims = [64, 64, 64, 64, 64, 32]
-fdims = [120, 84, 10]
-IMF = [51, 51, 107]
+# cdims = [64, 64, 64, 64, 64]
+# cdims = [64, 64, 128, 256, 512]
+
+# cdims = [32, 48, 64, 64, 64]     # Was used for nabernet_c1
+cdims = [30, 45, 60, 75, 90]     # Was used for nabernet_c2
+# fdims = [128, 84, 5]            # Was used for nabernet_c1
+fdims = [100, 64, 5]             # Was used for nabernet_c2
+IMF = [51, 51, 101]
 # =============================================================
 
 

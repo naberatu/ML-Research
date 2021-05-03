@@ -130,7 +130,6 @@ def pretty_plot(path_train_log, path_test_log, name_model="Model"):
     #                      linewidth=2)
 
     ax.set_title(name_model)
-    # ax.se
     ax.set_ylabel('Accuracy')
     ax.set_xlabel('Epochs')
     ax.axis('tight')
