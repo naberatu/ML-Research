@@ -36,7 +36,6 @@ random.seed(12)
 # B2 is the best, with 40 epochs.
 
 model_name = "unet_a"
-# model = UNet(retain_dim=True)
 model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
     in_channels=3, out_channels=1, init_features=32, pretrained=False)
 
@@ -79,7 +78,7 @@ elif "COVIDx" in SET_NAME:
     if "naber" in model_name:
         model = NaberNet(2)
 elif "MedSeg" in SET_NAME:
-    IMGSIZE = 424
+    IMGSIZE = 256
     EPOCHS = 10
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 

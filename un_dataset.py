@@ -28,15 +28,16 @@ class NIIDataset(Dataset):
 
         image = np.array(image.dataobj)
         image = Image.fromarray(image.astype("long"), 'RGB')
-        # print(image.size)
 
         label = np.array(label.dataobj)
         label = Image.fromarray(label.astype("long"), 'RGB')
-        # print(label.size)
 
         if self.transform:
             image = self.transform(image)
             label = self.transform(label)
+
+        # print("Image: ", image.size)
+        # print("Label: ", label.size)
 
         # print("Image: ", image)
         # print("Label: ", label)

@@ -74,6 +74,7 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
         batch, label = x
         batch = batch.to(device)
         label = label.to(device)
+        label = label.long()
 
         output = model(batch)
         loss = criterion(output, label)
@@ -157,6 +158,7 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         batch, label = x
         batch = batch.to(device)
         label = label.to(device)
+        label = label.long()
 
         output = model(batch)
         loss = criterion(output, label)
