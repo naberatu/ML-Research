@@ -70,7 +70,8 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
     for i, x in enumerate(train_data_loader):
         data_time.update(time.time() - end)
 
-        batch, label = x['img'], x['label']
+        # batch, label = x['img'], x['label']
+        batch, label = x
         batch = batch.to(device)
         label = label.to(device)
 
@@ -152,7 +153,8 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
 
     for i, x in enumerate(test_data_loader):
 
-        batch, label = x['img'], x['label']
+        # batch, label = x['img'], x['label']
+        batch, label = x
         batch = batch.to(device)
         label = label.to(device)
 

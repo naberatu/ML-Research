@@ -6,6 +6,7 @@ from torchsummary import summary
 import random
 
 from dataset import CTDataset
+from un_dataset import NIIDataset
 from torchvision.models import resnet18
 from torchvision.models import resnet50
 from torchvision.models import alexnet
@@ -17,6 +18,7 @@ from plot import Plot
 
 ORG_PATH = './data/covct/'
 CTX_PATH = './data/CTX/'
+NII_PATH = './data/MedSeg/'
 
 random.seed(12)
 
@@ -36,7 +38,7 @@ random.seed(12)
 model_name = "unet_a"
 # model = UNet(retain_dim=True)
 model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
-    in_channels=3, out_channels=1, init_features=32, pretrained=True)
+    in_channels=3, out_channels=1, init_features=32, pretrained=False)
 
 
 # Loading a pretrained model
@@ -46,9 +48,10 @@ model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
 # =============================================================
 # NOTE SELECT DATASET
 # =============================================================
-SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
 # SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
 # SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
+SET_NAME = "MedSeg"            # Contains 100 images.    (Set S)
 # =============================================================
 
 # =============================================================
@@ -75,6 +78,11 @@ elif "COVIDx" in SET_NAME:
     normalize = transforms.Normalize(mean=0.611, std=0.273)
     if "naber" in model_name:
         model = NaberNet(2)
+elif "MedSeg" in SET_NAME:
+    IMGSIZE = 424
+    EPOCHS = 10
+    normalize = transforms.Normalize(mean=0.611, std=0.273)
+
 # =============================================================
 
 # =============================================================
@@ -99,16 +107,6 @@ val_transformer = transforms.Compose([
 # GENERATE DATASETS
 # =============================================================
 if "UCSD" in SET_NAME:
-    # trainset = CTDataset(root_dir=ORG_PATH,
-    #                      classes=CLASSES,
-    #                      covid_files=ORG_PATH + 'Data-split/COVID/ucsd_co_train.txt',
-    #                      non_covid_files=ORG_PATH + 'Data-split/NonCOVID/ucsd_nc_train.txt',
-    #                      transform=train_transformer)
-    # testset = CTDataset(root_dir=ORG_PATH,
-    #                     classes=CLASSES,
-    #                     covid_files=ORG_PATH + 'Data-split/COVID/ucsd_co_test.txt',
-    #                     non_covid_files=ORG_PATH + 'Data-split/NonCOVID/ucsd_nc_test.txt',
-    #                     transform=val_transformer)
     trainset = CTDataset(root_dir=ORG_PATH,
                          classes=CLASSES,
                          covid_files=ORG_PATH + 'Data-split/COVID/old_split/trainCT_COVID.txt',
@@ -135,21 +133,6 @@ elif "SARS" in SET_NAME:
                         covid_files=ORG_PATH + 'Data-split/COVID/sarsct_co_test.txt',
                         non_covid_files=ORG_PATH + 'Data-split/NonCOVID/sarsct_nc_test.txt',
                         transform=val_transformer)
-    # trainset = CTDataset(root_dir=ORG_PATH,
-    #                      classes=CLASSES,
-    #                      covid_files=ORG_PATH + 'Data-split/COVID/old_split/new_CT_CO_train.txt',
-    #                      non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/new_CT_NC_train.txt',
-    #                      transform=train_transformer)
-    # valset = CTDataset(root_dir=ORG_PATH,
-    #                    classes=CLASSES,
-    #                    covid_files=ORG_PATH + 'Data-split/COVID/old_split/new_CT_CO_val.txt',
-    #                    non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/new_CT_NC_val.txt',
-    #                    transform=val_transformer)
-    # testset = CTDataset(root_dir=ORG_PATH,
-    #                     classes=CLASSES,
-    #                     covid_files=ORG_PATH + 'Data-split/COVID/old_split/new_CT_CO_test.txt',
-    #                     non_covid_files=ORG_PATH + 'Data-split/NonCOVID/old_split/new_CT_NC_test.txt',
-    #                     transform=val_transformer)
 elif "COVIDx" in SET_NAME:
     trainset = CTDataset(root_dir=CTX_PATH + '2A_images',
                          classes=CLASSES,
@@ -168,15 +151,18 @@ elif "COVIDx" in SET_NAME:
                         non_covid_files=CTX_PATH + 'nc_test.txt',
                         transform=val_transformer,
                         is_ctx=True)
+
+elif "MedSeg" in SET_NAME:
+    trainset = NIIDataset(images=NII_PATH + "tr_im.nii.gz", masks=NII_PATH + "tr_mask.nii.gz", transform=train_transformer)
+    testset = NIIDataset(images=NII_PATH + "val_im.nii.gz", masks=NII_PATH + "tr_mask.nii.gz", transform=val_transformer)
+
 # =============================================================
 
 # =============================================================
 # CREATE DATA-LOADERS FOR ALL SETS
 # =============================================================
 train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=1)
-# val_loader = DataLoader(valset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
-# test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
-test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=0)
+test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
 # =============================================================
 
 # =============================================================
@@ -225,9 +211,6 @@ if __name__ == '__main__':
     # RUNS ALL TRAINING AND TESTS.
     fit(model, train_loader, test_loader, optimizer, epochs=EPOCHS, model_name=model_name)
     print("\n> All Epochs completed!")
-    # print("\n> Performing final test...")
-    # test(model, test_loader, model_name, epoch=1, valsplit=True)
-    # print("\n> Test Complete.")
 
     print("\n> Generating Plots...")
     Plot(model_name).plot()
