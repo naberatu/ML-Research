@@ -3,18 +3,22 @@ from torchvision import transforms as transforms
 import torch.optim as optim
 import os
 from torchsummary import summary
+import random
 
 from dataset import CTDataset
 from torchvision.models import resnet18
 from torchvision.models import resnet50
 from torchvision.models import alexnet
 from nabernet import NaberNet
+# from unet import UNet
 
 from fit_routine import *
 from plot import Plot
 
 ORG_PATH = './data/covct/'
 CTX_PATH = './data/CTX/'
+
+random.seed(12)
 
 # =============================================================
 # NOTE SELECT MODEL
@@ -26,8 +30,14 @@ CTX_PATH = './data/CTX/'
 # model_name = "alexnet"
 # model = alexnet(pretrained=False)
 
-model_name = "nabernet_b3"
+# model_name = "nabernet_c3"
 # B2 is the best, with 40 epochs.
+
+model_name = "unet_a"
+# model = UNet(retain_dim=True)
+model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
+    in_channels=3, out_channels=1, init_features=32, pretrained=True)
+
 
 # Loading a pretrained model
 # model = torch.load(model_name + ".tar")
@@ -36,9 +46,9 @@ model_name = "nabernet_b3"
 # =============================================================
 # NOTE SELECT DATASET
 # =============================================================
-# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
-# SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.        (Set B)
-SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
+SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+# SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
+# SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 # =============================================================
 
 # =============================================================
@@ -165,7 +175,8 @@ elif "COVIDx" in SET_NAME:
 # =============================================================
 train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=1)
 # val_loader = DataLoader(valset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
-test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
+# test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
+test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=0)
 # =============================================================
 
 # =============================================================

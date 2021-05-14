@@ -14,6 +14,6 @@ class Plot:
 
 
 if __name__ == '__main__':
-    Plot("nabernet_c2").plot()
+    Plot("resnet18_c").plot()
     # If you're gonna retest a model, erase its log first.
 

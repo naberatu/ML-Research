@@ -217,7 +217,7 @@ if __name__ == '__main__':
     # model_name = "customnet42"
 
     # model = torch.load("m_resnet18.tar")
-    model_name = "nabernet_b3"
+    model_name = "nabernet_b_new"
     model = NaberNet(1)
 
     if model_name == "m_vgg16":
@@ -237,7 +237,7 @@ if __name__ == '__main__':
 
     print("DONE")
     # TRAINING LOOP
-    for epoch in range(1, 31):
+    for epoch in range(1, 41):
     # for epoch in range(1, 2):
         print("\nTraining Epoch", str(epoch) + "...", end='\t')
 

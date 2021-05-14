@@ -3,9 +3,13 @@ import os
 from torch.utils.data import Dataset, DataLoader
 import torch
 import torch.nn as nn
+import numpy as np
+import matplotlib.cm as cm
 
 from PIL import Image
 import matplotlib.pyplot as plt
+import nibabel as nib
+
 from sklearn.metrics import classification_report, roc_auc_score, roc_curve, confusion_matrix
 
 
@@ -15,6 +19,21 @@ def read_txt(txt_path):
         lines = f.readlines()
     txt_data = [line.strip() for line in lines]
     return txt_data
+
+
+def colormap():
+    num_classes = 3 - 1             # 2 classes (COV, NOCOV) + 1 background
+    idx = np.linspace(0., 1., num_classes)
+    cmap = cm.get_cmap('viridis')
+    rgb = cmap(idx, bytes=True)[:, :3]  # Remove alpha value
+
+    h, w = 190, 100
+    rgb = rgb.repeat(1000, 0)
+    target = np.zeros((h * w, 3), dtype=np.uint8)
+    target[:rgb.shape[0]] = rgb
+    target = target.reshape(h, w, 3)
+
+    plt.imshow(target)  # Each class in 10 rows
 
 
 # =============================================================
@@ -52,6 +71,10 @@ class CTDataset(Dataset):
         # Read the image
         image = Image.open(path).convert('RGB')
 
+        # NOTE: Comment this out while testing.
+        # plt.imshow(image)
+        # plt.show()
+
         # Apply transforms
         if self.transform:
             image = self.transform(image)
@@ -63,6 +86,7 @@ class CTDataset(Dataset):
                 # 'paths': path}      # NOTE: Comment this line out for fit_routine
 
         return data
+
 
 # =============================================================
 # Former Metrics Method

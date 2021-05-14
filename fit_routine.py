@@ -7,7 +7,7 @@ import logging
 
 
 def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criterion=torch.nn.CrossEntropyLoss(),
-        print_freq=10, save_model=False, save_params=False, best_acc=0, model_name="None"):
+        print_freq=10, save_model=True, save_params=True, best_acc=0, model_name="None"):
 
     for epoch in range(epochs):
         print("\n==========================================")
