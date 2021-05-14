@@ -38,8 +38,7 @@ random.seed(12)
 
 model_name = "unet_a"
 model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
-    in_channels=3, out_channels=1, init_features=32, pretrained=False)
-
+    in_channels=3, out_channels=5, init_features=32, pretrained=False)
 
 
 # Loading a pretrained model
