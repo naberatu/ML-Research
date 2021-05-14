@@ -4,6 +4,7 @@ import torch.optim as optim
 import os
 from torchsummary import summary
 import random
+import warnings
 
 from dataset import CTDataset
 from un_dataset import NIIDataset
@@ -11,7 +12,6 @@ from torchvision.models import resnet18
 from torchvision.models import resnet50
 from torchvision.models import alexnet
 from nabernet import NaberNet
-# from unet import UNet
 
 from fit_routine import *
 from plot import Plot
@@ -20,6 +20,7 @@ ORG_PATH = './data/covct/'
 CTX_PATH = './data/CTX/'
 NII_PATH = './data/MedSeg/'
 
+warnings.filterwarnings("ignore")
 random.seed(12)
 
 # =============================================================
@@ -38,6 +39,7 @@ random.seed(12)
 model_name = "unet_a"
 model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
     in_channels=3, out_channels=1, init_features=32, pretrained=False)
+
 
 
 # Loading a pretrained model

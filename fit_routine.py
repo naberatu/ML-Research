@@ -76,6 +76,8 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
         label = label.to(device)
         label = label.long()
 
+        label = torch.argmax(label, dim=1)
+
         output = model(batch)
         loss = criterion(output, label)
 
@@ -124,9 +126,6 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
     else:
         print("\n> Test Logger successfully created.")
 
-    # if valsplit:
-    #     file = str(path) + "/" +"--"+model_name+"__split__"+"_test.log"
-    # else:
     file = str(path) + "/" +"__"+model_name+"__run__"+"_test.log"
 
     logger = logging.getLogger(name='test')
@@ -159,6 +158,8 @@ def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEnt
         batch = batch.to(device)
         label = label.to(device)
         label = label.long()
+
+        label = torch.argmax(label, dim=1)
 
         output = model(batch)
         loss = criterion(output, label)

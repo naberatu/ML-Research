@@ -27,18 +27,13 @@ class NIIDataset(Dataset):
         label = nib.load(self.mask_file)
 
         image = np.array(image.dataobj)
-        image = Image.fromarray(image.astype("long"), 'RGB')
+        image = Image.fromarray(image.astype("uint8"), 'RGB')
 
         label = np.array(label.dataobj)
-        label = Image.fromarray(label.astype("long"), 'RGB')
+        label = Image.fromarray(label.astype("uint8"), 'RGB')
 
         if self.transform:
             image = self.transform(image)
             label = self.transform(label)
 
-        # print("Image: ", image.size)
-        # print("Label: ", label.size)
-
-        # print("Image: ", image)
-        # print("Label: ", label)
         return image, label
