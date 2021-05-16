@@ -32,6 +32,9 @@ class NIIDataset(Dataset):
         label = np.array(label.dataobj)
         label = Image.fromarray(label.astype("uint8"), 'RGB')
 
+        print("Image: ", type(image))
+        print("Label: ", type(image))
+
         if self.transform:
             image = self.transform(image)
             label = self.transform(label)
