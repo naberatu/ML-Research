@@ -10,10 +10,9 @@ from torch import optim
 from tqdm import tqdm
 
 from un_eval import eval_net
-# from unet import UNet
+from un_model import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-# from utils.dataset import BasicDataset
 from un_dataset import SegSet
 from torch.utils.data import DataLoader, random_split
 
@@ -66,10 +65,15 @@ def train_net(net, device, epochs=5, batch_size=1, lr=0.001, val_percent=0.1, sa
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
+
                 mask_type = torch.float32 if out_ch == 1 else torch.long
                 true_masks = true_masks.to(device=device, dtype=mask_type)
-
                 masks_pred = net(imgs)
+
+                # masks_pred = masks_pred.squeeze(1)
+                # true_masks = true_masks.squeeze(1)
+                # true_masks = true_masks.argmax(true_masks, dim=1)
+
                 loss = criterion(masks_pred, true_masks)
                 epoch_loss += loss.item()
                 writer.add_scalar('Loss/train', loss.item(), global_step)
@@ -148,12 +152,12 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    # net = UNet(n_channels=3, n_classes=1, bilinear=True)
 
-    in_ch, out_ch = 3, 1
+    in_ch, out_ch = 3, 3
     bilinear = False
-    net = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
-                           in_channels=in_ch, out_channels=out_ch, init_features=32, pretrained=True)
+    # net = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
+    #                      in_channels=in_ch, out_channels=out_ch, init_features=32, pretrained=True)
+    net = UNet(n_channels=in_ch, n_classes=out_ch, bilinear=True)
     logging.info(f'Network:\n'
                  f'\t{in_ch} input channels\n'
                  f'\t{out_ch} output channels (classes)\n'
@@ -170,13 +174,8 @@ if __name__ == '__main__':
     # cudnn.benchmark = True
 
     try:
-        train_net(net=net,
-                  epochs=args.epochs,
-                  batch_size=args.batchsize,
-                  lr=args.lr,
-                  device=device,
-                  img_scale=args.scale,
-                  val_percent=args.val / 100)
+        train_net(net=net, epochs=args.epochs, batch_size=args.batchsize, lr=args.lr, device=device,
+                  img_scale=args.scale, val_percent=args.val / 100)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')

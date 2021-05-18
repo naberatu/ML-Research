@@ -44,7 +44,6 @@ class SegSet(Dataset):
 
     def __getitem__(self, i):
         idx = self.ids[i]
-        print(self.masks_dir + idx + self.mask_suffix + '.*')
         mask_file = glob(self.masks_dir + idx + self.mask_suffix + '.*')
         img_file = glob(self.imgs_dir + idx + '.*')
 
