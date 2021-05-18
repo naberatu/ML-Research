@@ -14,26 +14,17 @@ from un_eval import eval_net
 
 from torch.utils.tensorboard import SummaryWriter
 # from utils.dataset import BasicDataset
-from un_dataset import NIIDataset
+from un_dataset import SegSet
 from torch.utils.data import DataLoader, random_split
 
-# dir_img = 'data/imgs/'
-# dir_mask = 'data/masks/'
+dir_img = './data/MedSeg/tr_ims/'
+dir_mask = './data/MedSeg/tr_masks/'
 dir_checkpoint = 'checkpoints/'
-NII_PATH = './data/MedSeg/'
 
 
-def train_net(net,
-              device,
-              epochs=5,
-              batch_size=1,
-              lr=0.001,
-              val_percent=0.1,
-              save_cp=True,
-              img_scale=0.5):
+def train_net(net, device, epochs=5, batch_size=1, lr=0.001, val_percent=0.1, save_cp=True, img_scale=0.5):
 
-    # dataset = BasicDataset(dir_img, dir_mask, img_scale)
-    dataset = NIIDataset(images=NII_PATH + "tr_im.nii.gz", masks=NII_PATH + "tr_mask.nii.gz")
+    dataset = SegSet(dir_img, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
