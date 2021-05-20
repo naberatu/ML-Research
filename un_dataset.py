@@ -7,6 +7,33 @@ from torch.utils.data import Dataset
 import logging
 from PIL import Image
 
+#
+# def mapToRGB(mapping, mask):
+#     # print('----mask->rgb----')
+#     mask = torch.from_numpy(np.array(mask))
+#     mask = torch.squeeze(mask)  # remove 1
+#
+#     # check the present values in the mask, 0 and 255 in my case
+#     # print('unique values rgb    ', torch.unique(mask))
+#     # -> unique values rgb     tensor([  0, 255], dtype=torch.uint8)
+#
+#     class_mask = mask
+#     class_mask = class_mask.permute(2, 0, 1).contiguous()
+#     h, w = class_mask.shape[1], class_mask.shape[2]
+#     # h, w = class_mask.shape[0], class_mask.shape[2]
+#     mask_out = torch.empty(h, w, dtype=torch.long)
+#
+#     for k in mapping:
+#         idx = (class_mask == torch.tensor(k, dtype=torch.uint8).unsqueeze(1).unsqueeze(2))
+#         validx = (idx.sum(0) == 3)
+#         mask_out[validx] = torch.tensor(mapping[k], dtype=torch.long)
+#
+#     # check the present values after mapping, in my case 0, 1, 2, 3
+#     # print('unique values mapped ', torch.unique(mask_out))
+#     # -> unique values mapped  tensor([0, 1, 2, 3])
+#
+#     return mask_out
+
 
 class SegSet(Dataset):
     def __init__(self, imgs_dir, masks_dir, scale=1, mask_suffix=''):
@@ -14,6 +41,11 @@ class SegSet(Dataset):
         self.masks_dir = masks_dir
         self.scale = scale
         self.mask_suffix = mask_suffix
+        self.mapping = {(0, 0, 0)   : 0,            # Background
+                        (255, 0, 0) : 1,            # Class 1:  Ground Glass
+                        (0, 255, 0) : 2,            # Class 2:  Consolidation
+                        (0, 0, 255) : 3 }           # Class 3:  Pleural Effusion
+
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
@@ -22,6 +54,33 @@ class SegSet(Dataset):
 
     def __len__(self):
         return len(self.ids)
+
+    def mapToRGB(self, mask):
+        # print('----mask->rgb----')
+        mask = torch.from_numpy(np.array(mask))
+        mask = torch.squeeze(mask)  # remove 1
+
+        # check the present values in the mask, 0 and 255 in my case
+        # print('unique values rgb    ', torch.unique(mask))
+        # -> unique values rgb     tensor([  0, 255], dtype=torch.uint8)
+
+        class_mask = mask
+        print("Class Shape: ", class_mask.shape)
+        # class_mask = class_mask.permute(2, 0, 1).contiguous()
+        h, w = class_mask.shape[1], class_mask.shape[2]
+        # h, w = class_mask.shape[0], class_mask.shape[2]
+        mask_out = torch.empty(h, w, dtype=torch.long)
+
+        for k in self.mapping:
+            idx = (class_mask == torch.tensor(k, dtype=torch.uint8).unsqueeze(1).unsqueeze(2))
+            validx = (idx.sum(0) == 3)
+            mask_out[validx] = torch.tensor(self.mapping[k], dtype=torch.long)
+
+        # check the present values after mapping, in my case 0, 1, 2, 3
+        # print('unique values mapped ', torch.unique(mask_out))
+        # -> unique values mapped  tensor([0, 1, 2, 3])
+
+        return mask_out
 
     @classmethod
     def preprocess(cls, pil_img, scale):
@@ -35,7 +94,7 @@ class SegSet(Dataset):
         if len(img_nd.shape) == 2:
             img_nd = np.expand_dims(img_nd, axis=2)
 
-        # HWC to CHW
+        # Reorders dimensions from H, W, C to C, H, W
         img_trans = img_nd.transpose((2, 0, 1))
         if img_trans.max() > 1:
             img_trans = img_trans / 255
@@ -60,57 +119,19 @@ class SegSet(Dataset):
         img = self.preprocess(img, self.scale)
         mask = self.preprocess(mask, self.scale)
 
+        # print("Dataset 1: ", mask.shape)
+
+        img = torch.from_numpy(img).type(torch.FloatTensor)
+        mask = torch.from_numpy(mask).type(torch.FloatTensor)
+        # print("Dataset 2: ", mask.shape)
+
+        mask = self.mapToRGB(mask)
+        mask = mask.float()
+        # print("Dataset 3: ", mask)
+        #
+        # exit(0)
+
         return {
-            'image': torch.from_numpy(img).type(torch.FloatTensor),
-            'mask': torch.from_numpy(mask).type(torch.FloatTensor)
+            'image': img,
+            'mask': mask
         }
-
-
-
-
-
-
-
-
-#
-# import os
-# from torch.utils.data import Dataset, DataLoader
-# import torch
-# import torch.nn as nn
-#
-# from PIL import Image
-# import matplotlib.pyplot as plt
-# import nibabel as nib
-# import numpy as np
-#
-#
-# # =============================================================
-# # NOTE DATASET CLASS
-# # =============================================================
-# class NIIDataset(Dataset):
-#     def __init__(self, images, masks, transform=None):
-#         self.image_file = images
-#         self.mask_file = masks
-#         self.transform = transform
-#
-#     def __len__(self):
-#         return len(self.image_file)
-#
-#     def __getitem__(self, idx):
-#         image = nib.load(self.image_file)
-#         label = nib.load(self.mask_file)
-#
-#         image = np.array(image.dataobj)
-#         image = image.astype("uint8")
-#
-#         label = np.array(label.dataobj)
-#         label = label.astype("uint8")
-#
-#         # print("Image: ", type(image))
-#         # print("Label: ", type(image))
-#
-#         if self.transform:
-#             image = self.transform(image)
-#             label = self.transform(label)
-#
-#         return image, label

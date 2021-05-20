@@ -14,6 +14,7 @@ from un_model import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 from un_dataset import SegSet
+# from un_dataset import mapToRGB
 from torch.utils.data import DataLoader, random_split
 
 dir_img = './data/MedSeg/tr_ims/'
@@ -21,9 +22,10 @@ dir_mask = './data/MedSeg/tr_masks/'
 dir_checkpoint = 'checkpoints/'
 
 
-def train_net(net, device, epochs=5, batch_size=1, lr=0.001, val_percent=0.1, save_cp=True, img_scale=0.5):
+def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, save_cp=True, img_scale=0.5):
 
     dataset = SegSet(dir_img, dir_mask, img_scale)
+    MAPPING = dataset.mapping
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -67,11 +69,20 @@ def train_net(net, device, epochs=5, batch_size=1, lr=0.001, val_percent=0.1, sa
                 imgs = imgs.to(device=device, dtype=torch.float32)
 
                 mask_type = torch.float32 if out_ch == 1 else torch.long
+
+
+                # NOTE: Try Mapping HERE
+                # print("Shape 2: ", true_masks.shape)
+                # true_masks = mapToRGB(MAPPING, true_masks)
+                # print("Shape 3: ", true_masks)
+                # exit(0)
+
                 true_masks = true_masks.to(device=device, dtype=mask_type)
                 masks_pred = net(imgs)
 
                 # masks_pred = masks_pred.squeeze(1)
                 # true_masks = true_masks.squeeze(1)
+                # print("Shape 1: ", true_masks.shape)
                 # true_masks = true_masks.argmax(true_masks, dim=1)
 
                 loss = criterion(masks_pred, true_masks)
@@ -157,7 +168,7 @@ if __name__ == '__main__':
     bilinear = False
     # net = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
     #                      in_channels=in_ch, out_channels=out_ch, init_features=32, pretrained=True)
-    net = UNet(n_channels=in_ch, n_classes=out_ch, bilinear=True)
+    net = UNet(n_channels=in_ch, n_classes=out_ch, bilinear=False)
     logging.info(f'Network:\n'
                  f'\t{in_ch} input channels\n'
                  f'\t{out_ch} output channels (classes)\n'
