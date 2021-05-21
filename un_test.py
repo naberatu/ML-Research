@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import sys
 
 import numpy as np
 import torch
@@ -30,13 +31,9 @@ def plot_img_and_mask(img, mask):
     plt.show()
 
 
-def predict_img(net,
-                full_img,
-                device,
-                scale_factor=1,
-                out_threshold=0.5):
-    net.eval()
+def predict_img(net, full_img, device, scale_factor=1, out_threshold=0.5):
 
+    net.eval()
     img = torch.from_numpy(SegSet.preprocess(full_img, scale_factor))
 
     img = img.unsqueeze(0)
@@ -111,7 +108,7 @@ def get_output_filenames(args):
 
 
 def mask_to_image(mask):
-    return Image.fromarray((mask * 255).astype(np.uint8))
+    return Image.fromarray((255 * mask).astype(np.uint8).transpose((1, 2, 0)))
 
 
 if __name__ == "__main__":
@@ -120,7 +117,6 @@ if __name__ == "__main__":
     out_files = get_output_filenames(args)
 
     net = UNet(n_channels=3, n_classes=3)
-    # net = torch.load("./checkpoints/CP_epoch5.pth")
 
     logging.info("Loading model {}".format(args.model))
 
@@ -136,11 +132,7 @@ if __name__ == "__main__":
 
         img = Image.open(fn)
 
-        mask = predict_img(net=net,
-                           full_img=img,
-                           scale_factor=args.scale,
-                           out_threshold=args.mask_threshold,
-                           device=device)
+        mask = predict_img(net=net, full_img=img, scale_factor=args.scale, out_threshold=args.mask_threshold, device=device)
 
         if not args.no_save:
             out_fn = out_files[i]
