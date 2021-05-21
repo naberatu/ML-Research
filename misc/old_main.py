@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 from torchstat import stat
 
-import ctxdataset
+import temp_dataset
 from nabernet import NaberNet
 
 import os
@@ -31,8 +31,8 @@ from torchvision.models import resnet34
 from torchvision.models import resnet101
 from torchvision.models import resnet152
 
-from dataset import CTDataset
-from dataset import compute_metrics
+from ctx_dataset import CTDataset
+from ctx_dataset import compute_metrics
 # from ctxdataset import CTXDataset
 # from ctxdataset import compute_metrics
 from earlystop import EarlyStopping
@@ -47,8 +47,8 @@ random.seed(0)
 # PARAMETERS
 log_dir = "~/logs"
 writer = SummaryWriter(log_dir)
-PATH = './data/covct/'
-CTX_PATH = './data/CTX/'
+PATH = '../data/covct/'
+CTX_PATH = '../data/CTX/'
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # CLASSES = ['UCSD_NC', 'UCSD_CO']            # Group 1 Distinctions

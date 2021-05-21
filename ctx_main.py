@@ -1,13 +1,11 @@
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision import transforms as transforms
 import torch.optim as optim
 import os
-from torchsummary import summary
 import random
 import warnings
 
-from dataset import CTDataset
-from un_dataset import NIIDataset
+from ctx_dataset import CTDataset
 from torchvision.models import resnet18
 from torchvision.models import resnet50
 from torchvision.models import alexnet
@@ -51,8 +49,7 @@ model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
 # =============================================================
 # SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
 # SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
-# SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
-SET_NAME = "MedSeg"            # Contains 100 images.    (Set S)
+SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 # =============================================================
 
 # =============================================================
@@ -79,10 +76,6 @@ elif "COVIDx" in SET_NAME:
     normalize = transforms.Normalize(mean=0.611, std=0.273)
     if "naber" in model_name:
         model = NaberNet(2)
-elif "MedSeg" in SET_NAME:
-    IMGSIZE = 256
-    EPOCHS = 10
-    normalize = transforms.Normalize(mean=0.611, std=0.273)
 
 # =============================================================
 
@@ -152,10 +145,6 @@ elif "COVIDx" in SET_NAME:
                         non_covid_files=CTX_PATH + 'nc_test.txt',
                         transform=val_transformer,
                         is_ctx=True)
-
-elif "MedSeg" in SET_NAME:
-    trainset = NIIDataset(images=NII_PATH + "tr_im.nii.gz", masks=NII_PATH + "tr_mask.nii.gz", transform=train_transformer)
-    testset = NIIDataset(images=NII_PATH + "val_im.nii.gz", masks=NII_PATH + "tr_mask.nii.gz", transform=val_transformer)
 
 # =============================================================
 
