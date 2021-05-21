@@ -24,11 +24,12 @@ dir_checkpoint = 'checkpoints/'
 
 def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, save_cp=True, img_scale=0.5):
 
-    dataset = SegSet(dir_img, dir_mask, img_scale)
-    MAPPING = dataset.mapping
-    n_val = int(len(dataset) * val_percent)
-    n_train = len(dataset) - n_val
-    train, val = random_split(dataset, [n_train, n_val])
+    trainset = SegSet(dir_img, dir_mask, img_scale)
+
+    n_val = int(len(trainset) * val_percent)
+    n_train = len(trainset) - n_val
+    train, val = random_split(trainset, [n_train, n_val])
+
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True, drop_last=True)
 
@@ -47,11 +48,11 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
     ''')
 
     optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if out_ch > 1 else 'max', patience=2)
-    if out_ch > 1:
-        criterion = nn.CrossEntropyLoss()
-    else:
-        criterion = nn.BCEWithLogitsLoss()
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if OUT_CH > 1 else 'max', patience=2)
+    # if OUT_CH > 1:
+    criterion = nn.CrossEntropyLoss()
+    # else:
+    #     criterion = nn.BCEWithLogitsLoss()
 
     for epoch in range(epochs):
         net.train()
@@ -61,31 +62,20 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
             for batch in train_loader:
                 imgs = batch['image']
                 true_masks = batch['mask']
-                assert imgs.shape[1] == in_ch, \
-                    f'Network has been defined with {in_ch} input channels, ' \
+                assert imgs.shape[1] == IN_CH, \
+                    f'Network has been defined with {IN_CH} input channels, ' \
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-
-                mask_type = torch.float32 if out_ch == 1 else torch.long
-
-
-                # NOTE: Try Mapping HERE
-                # print("Shape 2: ", true_masks.shape)
-                # true_masks = mapToRGB(MAPPING, true_masks)
-                # print("Shape 3: ", true_masks)
-                # exit(0)
+                mask_type = torch.float32 if OUT_CH == 1 else torch.long        # will use Long for us
 
                 true_masks = true_masks.to(device=device, dtype=mask_type)
                 masks_pred = net(imgs)
 
-                # masks_pred = masks_pred.squeeze(1)
-                # true_masks = true_masks.squeeze(1)
-                # print("Shape 1: ", true_masks.shape)
-                # true_masks = true_masks.argmax(true_masks, dim=1)
-
                 loss = criterion(masks_pred, true_masks)
+
+                # TODO: Find out why the epoch_loss line breaks CUDA.
                 epoch_loss += loss.item()
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
@@ -107,7 +97,7 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
                     scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
-                    if out_ch > 1:
+                    if OUT_CH > 1:
                         logging.info('Validation cross entropy: {}'.format(val_score))
                         writer.add_scalar('Loss/test', val_score, global_step)
                     else:
@@ -115,7 +105,7 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
                         writer.add_scalar('Dice/test', val_score, global_step)
 
                     writer.add_images('images', imgs, global_step)
-                    if out_ch == 1:
+                    if OUT_CH == 1:
                         writer.add_images('masks/true', true_masks, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
 
@@ -164,15 +154,20 @@ if __name__ == '__main__':
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
 
-    in_ch, out_ch = 3, 3
-    bilinear = False
+    # =================================
+    # NOTE Model starts here.
+    # =================================
+    IN_CH, OUT_CH = 3, 3
+
+    # bilinear = False
     # net = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
-    #                      in_channels=in_ch, out_channels=out_ch, init_features=32, pretrained=True)
-    net = UNet(n_channels=in_ch, n_classes=out_ch, bilinear=False)
+    #                      in_channels=IN_CH, out_channels=OUT_CH, init_features=32, pretrained=False)
+    net = UNet(n_channels=IN_CH, n_classes=OUT_CH)
     logging.info(f'Network:\n'
-                 f'\t{in_ch} input channels\n'
-                 f'\t{out_ch} output channels (classes)\n'
-                 f'\t{"Bilinear" if bilinear else "Transposed conv"} upscaling')
+                 f'\t{IN_CH} input channels\n'
+                 f'\t{OUT_CH} output channels (classes)\n'
+                 # f'\t{"Bilinear" if bilinear else "Transposed conv"} upscaling')
+                 f'\t{"Transposed conv"} upscaling')
 
     if args.load:
         net.load_state_dict(
