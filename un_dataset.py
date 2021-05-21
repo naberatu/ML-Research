@@ -16,9 +16,9 @@ class SegSet(Dataset):
         self.mask_suffix = mask_suffix
         self.mapping = {
                         (0, 0, 0)   : 0,            # Background
-                        (255, 0, 0) : 1,            # Class 1:  Ground Glass
-                        (0, 255, 0) : 2,            # Class 2:  Consolidation
-                        (0, 0, 255) : 3             # Class 3:  Pleural Effusion
+                        (1, 0, 0) : 1,            # Class 1:  Ground Glass
+                        (0, 1, 0) : 2,            # Class 2:  Consolidation
+                        (0, 0, 1) : 3             # Class 3:  Pleural Effusion
                         }
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'

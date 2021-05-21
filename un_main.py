@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 
-import numpy as np
 import torch
 import torch.nn as nn
 from torch import optim
@@ -11,10 +10,9 @@ from tqdm import tqdm
 
 from un_eval import eval_net
 from un_model import UNet
+from un_dataset import SegSet
 
 from torch.utils.tensorboard import SummaryWriter
-from un_dataset import SegSet
-# from un_dataset import mapToRGB
 from torch.utils.data import DataLoader, random_split
 
 dir_img = './data/MedSeg/tr_ims/'
@@ -67,18 +65,26 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
                     'the images are loaded correctly.'
 
-                imgs = imgs.to(device=device, dtype=torch.float32)
-                mask_type = torch.float32 if OUT_CH == 1 else torch.long        # will use Long for us
+                imgs = imgs.to(device=device, dtype=torch.float)
+                mask_type = torch.float if OUT_CH == 1 else torch.long        # will use Long for us
 
                 true_masks = true_masks.to(device=device, dtype=mask_type)
                 masks_pred = net(imgs)
 
+                # NOTE: the same was put in un_eval
+                masks_pred[masks_pred < 0] = 0
+                true_masks[true_masks < 0] = 0
+                masks_pred[masks_pred >= OUT_CH] = OUT_CH - 1
+                true_masks[true_masks >= OUT_CH] = OUT_CH - 1
+                # print("MaskPred: ", torch.tensor(data=masks_pred))
+                # print("MaskTrue: ", torch.tensor(data=true_masks))
+
+                # TODO: Find out why the loss breaks CUDA.
+
                 loss = criterion(masks_pred, true_masks)
-
-                # TODO: Find out why the epoch_loss line breaks CUDA.
                 epoch_loss += loss.item()
-                writer.add_scalar('Loss/train', loss.item(), global_step)
 
+                writer.add_scalar('Loss/train', loss.item(), global_step)
                 pbar.set_postfix(**{'loss (batch)': loss.item()})
 
                 optimizer.zero_grad()
@@ -145,6 +151,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
     args = get_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cpu')
     logging.info(f'Using device {device}')
 
     # Change here to adapt to your data

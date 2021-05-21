@@ -18,6 +18,12 @@ def eval_net(net, loader, device):
             imgs = imgs.to(device=device, dtype=torch.float32)
             true_masks = true_masks.to(device=device, dtype=mask_type)
 
+            # NOTE: duplicated from un_main
+            imgs[imgs < 0] = 0
+            true_masks[true_masks < 0] = 0
+            imgs[imgs >= net.n_classes] = net.n_classes - 1
+            true_masks[true_masks >= net.n_classes] = net.n_classes - 1
+
             with torch.no_grad():
                 mask_pred = net(imgs)
 
