@@ -2,6 +2,7 @@
 /models/
 /runs/
 /checkpoints/
+/misc/
 /*.tar
 /*.pth
 /*.csv

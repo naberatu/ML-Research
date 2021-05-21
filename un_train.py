@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader, random_split
 
 dir_img = './data/MedSeg/tr_ims/'
 dir_mask = './data/MedSeg/tr_masks/'
+dir_test = './data/MedSeg/val_ims/'
 dir_checkpoint = 'checkpoints/'
 
 
@@ -171,9 +172,7 @@ if __name__ == '__main__':
                  f'\t{"Transposed conv"} upscaling')
 
     if args.load:
-        net.load_state_dict(
-            torch.load(args.load, map_location=device)
-        )
+        net.load_state_dict(torch.load(args.load, map_location=device))
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
@@ -183,6 +182,7 @@ if __name__ == '__main__':
     try:
         train_net(net=net, epochs=args.epochs, batch_size=args.batchsize, lr=args.lr, device=device,
                   img_scale=args.scale, val_percent=args.val / 100)
+
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
