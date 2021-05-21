@@ -9,6 +9,7 @@ from torch import optim
 from tqdm import tqdm
 
 from un_eval import eval_net
+from un_eval import fit_tensor
 from un_model import UNet
 from un_dataset import SegSet
 
@@ -47,10 +48,10 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
 
     optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if OUT_CH > 1 else 'max', patience=2)
-    # if OUT_CH > 1:
-    criterion = nn.CrossEntropyLoss()
-    # else:
-    #     criterion = nn.BCEWithLogitsLoss()
+    if OUT_CH > 1:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        criterion = nn.BCEWithLogitsLoss()
 
     for epoch in range(epochs):
         net.train()
@@ -71,15 +72,8 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
                 true_masks = true_masks.to(device=device, dtype=mask_type)
                 masks_pred = net(imgs)
 
-                # NOTE: the same was put in un_eval
-                masks_pred[masks_pred < 0] = 0
-                true_masks[true_masks < 0] = 0
-                masks_pred[masks_pred >= OUT_CH] = OUT_CH - 1
-                true_masks[true_masks >= OUT_CH] = OUT_CH - 1
-                # print("MaskPred: ", torch.tensor(data=masks_pred))
-                # print("MaskTrue: ", torch.tensor(data=true_masks))
-
-                # TODO: Find out why the loss breaks CUDA.
+                # Enforces 0 <= t < OUT_CH
+                fit_tensor(masks_pred, true_masks, OUT_CH)
 
                 loss = criterion(masks_pred, true_masks)
                 epoch_loss += loss.item()

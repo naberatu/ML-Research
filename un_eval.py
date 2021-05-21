@@ -5,6 +5,16 @@ from tqdm import tqdm
 from un_diceloss import dice_coeff
 
 
+def fit_tensor(prediction, truth, num_classes):
+    # Enforces non-negative tensors.
+    prediction[prediction < 0] = 0
+    truth[truth < 0] = 0
+
+    # Enforces tensors within range of class totals.
+    prediction[prediction >= num_classes] = num_classes - 1
+    truth[truth >= num_classes] = num_classes - 1
+
+
 def eval_net(net, loader, device):
     """Evaluation without the densecrf with the dice coefficient"""
     net.eval()
@@ -18,11 +28,8 @@ def eval_net(net, loader, device):
             imgs = imgs.to(device=device, dtype=torch.float32)
             true_masks = true_masks.to(device=device, dtype=mask_type)
 
-            # NOTE: duplicated from un_main
-            imgs[imgs < 0] = 0
-            true_masks[true_masks < 0] = 0
-            imgs[imgs >= net.n_classes] = net.n_classes - 1
-            true_masks[true_masks >= net.n_classes] = net.n_classes - 1
+            # Enforces 0 <= t < OUT_CH
+            fit_tensor(imgs, true_masks, net.n_classes)
 
             with torch.no_grad():
                 mask_pred = net(imgs)
