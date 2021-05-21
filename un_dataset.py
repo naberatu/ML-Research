@@ -15,10 +15,10 @@ class SegSet(Dataset):
         self.scale = scale
         self.mask_suffix = mask_suffix
         self.mapping = {
-                        (0, 0, 0)   : 0,            # Background
-                        (255, 0, 0) : 1,            # Class 1:  Ground Glass
-                        (0, 255, 0) : 2,            # Class 2:  Consolidation
-                        (0, 0, 255) : 3             # Class 3:  Pleural Effusion
+                        (0, 0, 0)       : 0,            # Background
+                        (235, 66, 66)   : 1,            # Class 1:  Ground Glass
+                        (151, 216, 121) : 2,            # Class 2:  Consolidation
+                        (102, 204, 255) : 3             # Class 3:  Pleural Effusion
                         }
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
@@ -83,10 +83,10 @@ class SegSet(Dataset):
         img = self.preprocess(img, self.scale)
         mask = self.preprocess(mask, self.scale)
 
-        img = torch.from_numpy(img).type(torch.IntTensor)
-        mask = torch.from_numpy(mask).type(torch.IntTensor)
+        img = torch.from_numpy(img).type(torch.FloatTensor)
+        mask = torch.from_numpy(mask).type(torch.FloatTensor)
 
-        mask = self.mapToRGB(mask).int()
+        mask = self.mapToRGB(mask).float()
 
         return {
             'image': img,
