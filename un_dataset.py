@@ -6,6 +6,7 @@ import torch
 from torch.utils.data import Dataset
 import logging
 from PIL import Image
+import sys
 
 
 class SegSet(Dataset):
@@ -31,18 +32,18 @@ class SegSet(Dataset):
         return len(self.ids)
 
     def mapToRGB(self, mask):
-        mask = torch.from_numpy(np.array(mask))
-        mask = torch.squeeze(mask)  # remove 1
+        # mask = torch.from_numpy(np.array(mask))
+        # mask = torch.squeeze(mask)  # remove 1
 
         class_mask = mask
         # print("Class Shape: ", class_mask.shape)
         h, w = class_mask.shape[1], class_mask.shape[2]
-        mask_out = torch.empty(h, w, dtype=torch.long)
+        mask_out = torch.empty(h, w, dtype=torch.long)          # Creates empty template tensor
 
         for k in self.mapping:
             idx = (class_mask == torch.tensor(k, dtype=torch.uint8).unsqueeze(1).unsqueeze(2))
             validx = (idx.sum(0) == 3)
-            mask_out[validx] = torch.tensor(self.mapping[k], dtype=torch.long)
+            mask_out[validx] = torch.tensor(self.mapping[k], dtype=torch.long)  # Fills in tensor
 
         return mask_out
 
