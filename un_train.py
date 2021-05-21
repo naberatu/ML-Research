@@ -74,9 +74,6 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
                 masks_pred = net(imgs)
 
                 # Enforces 0 <= t < OUT_CH
-                print(true_masks)
-                print(masks_pred)
-                sys.exit()
                 fit_tensor(masks_pred, true_masks, OUT_CH)
 
                 loss = criterion(masks_pred, true_masks)
