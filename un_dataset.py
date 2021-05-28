@@ -7,6 +7,9 @@ from torch.utils.data import Dataset
 import logging
 from PIL import Image
 import sys
+import matplotlib
+from matplotlib import pyplot as plt
+from matplotlib import cm
 
 
 class SegSet(Dataset):
@@ -15,12 +18,12 @@ class SegSet(Dataset):
         self.masks_dir = masks_dir
         self.scale = scale
         self.mask_suffix = mask_suffix
-        self.mapping = {
-                        (0, 0, 0)       : 0,            # Background
-                        (235, 66, 66)   : 1,            # Class 1:  Ground Glass
-                        (151, 216, 121) : 2,            # Class 2:  Consolidation
-                        (102, 204, 255) : 3             # Class 3:  Pleural Effusion
-                        }
+        # self.mapping = {
+        #                 (0, 0, 0)       : 0,            # Background
+        #                 (235, 66, 66)   : 1,            # Class 1:  Ground Glass
+        #                 (151, 216, 121) : 2,            # Class 2:  Consolidation
+        #                 (102, 204, 255) : 3             # Class 3:  Pleural Effusion
+        #                 }
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
@@ -32,18 +35,45 @@ class SegSet(Dataset):
         return len(self.ids)
 
     def mapToRGB(self, mask):
-        # mask = torch.from_numpy(np.array(mask))
-        # mask = torch.squeeze(mask)  # remove 1
-
         class_mask = mask
-        # print("Class Shape: ", class_mask.shape)
         h, w = class_mask.shape[1], class_mask.shape[2]
-        mask_out = torch.empty(h, w, dtype=torch.long)          # Creates empty template tensor
 
-        for k in self.mapping:
+        # NOTE: All experimental from here.
+        # classes = 4 - 1           # 3 classes + background.
+        # classes = 3 - 1             # Only the three classes.
+        classes = 6 - 1             # Only the three classes.     <--- Much better results.
+        idx = np.linspace(0., 1., classes)
+        cmap = cm.get_cmap('viridis')
+        rgb = cmap(idx, bytes=True)[:, :3]  # Remove alpha value
+
+        h, w = 256, 256
+        rgb = rgb.repeat(1000, 0)
+        target = np.zeros((h * w, 3), dtype=np.uint8)
+        target[:rgb.shape[0]] = rgb
+        target = target.reshape(h, w, 3)
+
+        target = torch.from_numpy(target)
+        colors = torch.unique(target.view(-1, target.size(2)), dim=0).numpy()
+        # target = target.permute(2, 0, 1).contiguous()
+
+        mapping = {tuple(c): t for c, t in zip(colors.tolist(), range(len(colors)))}
+        # NOTE: End of Experiment (ptrblk).
+
+        # # TODO: Check if this works better.
+        # mask_out = np.zeros((h, w, 3))          # Creates empty template tensor
+        # for i in range(mask_out.shape[0]):
+        #     for j in range(mask_out.shape[1]):
+        #         # TODO: figure out what an output should be.
+        #         mask, idx = class_mask[i, j]
+        #         mask_out[i, j] = self.mapping[idx]
+
+        # NOTE: this is the original
+        mask_out = torch.empty(h, w, dtype=torch.long)          # Creates empty template tensor
+        # for k in self.mapping:
+        for k in mapping:
             idx = (class_mask == torch.tensor(k, dtype=torch.uint8).unsqueeze(1).unsqueeze(2))
             validx = (idx.sum(0) == 3)
-            mask_out[validx] = torch.tensor(self.mapping[k], dtype=torch.long)  # Fills in tensor
+            mask_out[validx] = torch.tensor(mapping[k], dtype=torch.long)  # Fills in tensor
 
         return mask_out
 

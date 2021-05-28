@@ -2,6 +2,8 @@ import argparse
 import logging
 import os
 import sys
+import random
+import warnings
 
 import torch
 import torch.nn as nn
@@ -20,6 +22,9 @@ dir_img = './data/MedSeg/tr_ims/'
 dir_mask = './data/MedSeg/tr_masks/'
 dir_test = './data/MedSeg/val_ims/'
 dir_checkpoint = 'checkpoints/'
+
+warnings.filterwarnings("ignore")
+random.seed(12)
 
 
 def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, save_cp=True, img_scale=0.5):
