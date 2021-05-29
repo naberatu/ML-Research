@@ -38,10 +38,10 @@ class SegSet(Dataset):
         class_mask = mask
         h, w = class_mask.shape[1], class_mask.shape[2]
 
-        # NOTE: All experimental from here.
         # classes = 4 - 1           # 3 classes + background.
-        # classes = 3 - 1             # Only the three classes.
-        classes = 6 - 1             # Only the three classes.     <--- Much better results.
+        classes = 3 - 1             # Only the three classes.       <--- Better results.
+        # classes = 5 - 1             # Only the three classes.
+        # classes = 6 - 1             # Only the three classes.     <--- Better results.
         idx = np.linspace(0., 1., classes)
         cmap = cm.get_cmap('viridis')
         rgb = cmap(idx, bytes=True)[:, :3]  # Remove alpha value
@@ -57,20 +57,10 @@ class SegSet(Dataset):
         # target = target.permute(2, 0, 1).contiguous()
 
         mapping = {tuple(c): t for c, t in zip(colors.tolist(), range(len(colors)))}
-        # NOTE: End of Experiment (ptrblk).
 
-        # # TODO: Check if this works better.
-        # mask_out = np.zeros((h, w, 3))          # Creates empty template tensor
-        # for i in range(mask_out.shape[0]):
-        #     for j in range(mask_out.shape[1]):
-        #         # TODO: figure out what an output should be.
-        #         mask, idx = class_mask[i, j]
-        #         mask_out[i, j] = self.mapping[idx]
-
-        # NOTE: this is the original
         mask_out = torch.empty(h, w, dtype=torch.long)          # Creates empty template tensor
         # for k in self.mapping:
-        for k in mapping:
+        for k in mapping:            # <--- May be the culprit with distinctions (but maybe not?).
             idx = (class_mask == torch.tensor(k, dtype=torch.uint8).unsqueeze(1).unsqueeze(2))
             validx = (idx.sum(0) == 3)
             mask_out[validx] = torch.tensor(mapping[k], dtype=torch.long)  # Fills in tensor
