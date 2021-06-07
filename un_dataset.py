@@ -18,12 +18,12 @@ class SegSet(Dataset):
         self.masks_dir = masks_dir
         self.scale = scale
         self.mask_suffix = mask_suffix
-        # self.mapping = {
-        #                 (0, 0, 0)       : 0,            # Background
-        #                 (235, 66, 66)   : 1,            # Class 1:  Ground Glass
-        #                 (151, 216, 121) : 2,            # Class 2:  Consolidation
-        #                 (102, 204, 255) : 3             # Class 3:  Pleural Effusion
-        #                 }
+        self.mapping = {
+            0: 0,       # Black      (Background)
+            150: 1,     # Dark Gray  (Ground-Glass)
+            255: 2,     # Pure White (Consolidation)
+            104: 3,     # Light Gray (Pleural Effusion)
+        }
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
@@ -38,15 +38,12 @@ class SegSet(Dataset):
         class_mask = mask
         h, w = class_mask.shape[1], class_mask.shape[2]
 
-        # classes = 4 - 1           # 3 classes + background.
-        classes = 3 - 1             # Only the three classes.       <--- Better results.
-        # classes = 5 - 1             # Only the three classes.
-        # classes = 6 - 1             # Only the three classes.     <--- Better results.
+        classes = 4 - 1
+
         idx = np.linspace(0., 1., classes)
         cmap = cm.get_cmap('viridis')
         rgb = cmap(idx, bytes=True)[:, :3]  # Remove alpha value
 
-        h, w = 256, 256
         rgb = rgb.repeat(1000, 0)
         target = np.zeros((h * w, 3), dtype=np.uint8)
         target[:rgb.shape[0]] = rgb
@@ -59,7 +56,7 @@ class SegSet(Dataset):
         mapping = {tuple(c): t for c, t in zip(colors.tolist(), range(len(colors)))}
 
         mask_out = torch.empty(h, w, dtype=torch.long)          # Creates empty template tensor
-        # for k in self.mapping:
+
         for k in mapping:            # <--- May be the culprit with distinctions (but maybe not?).
             idx = (class_mask == torch.tensor(k, dtype=torch.uint8).unsqueeze(1).unsqueeze(2))
             validx = (idx.sum(0) == 3)

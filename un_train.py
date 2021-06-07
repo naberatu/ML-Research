@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
+import numpy as np
 
 from un_eval import eval_net
 from un_eval import fit_tensor
@@ -17,6 +18,7 @@ from un_dataset import SegSet
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, random_split
+from keras import backend as K
 
 dir_img = './data/MedSeg/tr_ims/'
 dir_mask = './data/MedSeg/tr_masks/'
@@ -60,6 +62,9 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
         criterion = nn.BCEWithLogitsLoss()
 
     for epoch in range(epochs):
+        logs = ["Cross Entropy: \t", "Dice Coeff: \t", "Sensitivity: \t", "Specificity: \t", "Precision: \t\t",
+                "G-Mean: \t\t", "F2 Score: \t\t"]
+        metrics = [0 for i in range(len(logs))]
         net.train()
 
         epoch_loss = 0
@@ -99,7 +104,14 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                         writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score = eval_net(net, val_loader, device)
+
+                    # val_score = eval_net(net, val_loader, device)
+                    # NOTE: Evaluation
+                    evals = eval_net(net, val_loader, device)
+                    val_score = evals[0]
+                    for i in range(len(metrics)):
+                        metrics[i] += evals[i]
+
                     scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
@@ -123,6 +135,16 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
                 pass
             torch.save(net.state_dict(),
                        dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+
+            # TODO: Figure out why specificity & precision are low, despite good dice.
+            #  Maybe it has something to do with the FN calculation?
+            for i, m in enumerate(metrics):
+                logs[i] += str(m / batch_size)
+
+            with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics.txt', 'w') as f:
+                f.writelines('\n'.join(logs))
+            f.close()
+
             logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
