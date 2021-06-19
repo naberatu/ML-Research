@@ -6,6 +6,7 @@ import torch
 from torch.utils.data import Dataset
 import logging
 from PIL import Image
+
 import sys
 import matplotlib
 from matplotlib import pyplot as plt
@@ -13,18 +14,18 @@ from matplotlib import cm
 
 
 class SegSet(Dataset):
-    def __init__(self, imgs_dir, masks_dir, scale=1, mask_suffix=''):
+    def __init__(self, imgs_dir, masks_dir, scale=1, mask_suffix='', trs=None):
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
         self.scale = scale
         self.mask_suffix = mask_suffix
+        self.transforms = trs
         self.mapping = {
             0: 0,       # Black      (Background)
             150: 1,     # Dark Gray  (Ground-Glass)
             255: 2,     # Pure White (Consolidation)
             104: 3,     # Light Gray (Pleural Effusion)
         }
-
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
@@ -65,11 +66,14 @@ class SegSet(Dataset):
         return mask_out
 
     @classmethod
-    def preprocess(cls, pil_img, scale):
+    def preprocess(cls, pil_img, scale, transforms=None):
         w, h = pil_img.size
         newW, newH = int(scale * w), int(scale * h)
         assert newW > 0 and newH > 0, 'Scale is too small'
         pil_img = pil_img.resize((newW, newH))
+
+        if transforms:
+            pil_img = transforms(pil_img)
 
         img_nd = np.array(pil_img)
 
@@ -77,7 +81,10 @@ class SegSet(Dataset):
             img_nd = np.expand_dims(img_nd, axis=2)
 
         # Reorders dimensions from H, W, C to C, H, W
-        img_trans = img_nd.transpose((2, 0, 1))
+        img_trans = img_nd
+        if img_nd.shape != (3, newH, newW):
+            img_trans = img_nd.transpose((2, 0, 1))
+
         if img_trans.max() > 1:
             img_trans = img_trans / 255
 
@@ -98,13 +105,15 @@ class SegSet(Dataset):
         assert img.size == mask.size, \
             f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
 
-        img = self.preprocess(img, self.scale)
+        img = self.preprocess(img, self.scale, transforms=self.transforms)
         mask = self.preprocess(mask, self.scale)
 
         img = torch.from_numpy(img).type(torch.FloatTensor)
         mask = torch.from_numpy(mask).type(torch.FloatTensor)
 
         mask = self.mapToRGB(mask).float()
+
+
 
         return {
             'image': img,

@@ -10,6 +10,7 @@ import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
 import numpy as np
+from keras.utils import normalize
 
 from un_eval import eval_net
 from un_eval import fit_tensor
@@ -18,6 +19,7 @@ from un_dataset import SegSet
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, random_split
+from torchvision import transforms as transforms
 from keras import backend as K
 
 dir_img = './data/MedSeg/tr_ims/'
@@ -29,9 +31,27 @@ warnings.filterwarnings("ignore")
 random.seed(12)
 
 
+class AddGaussianNoise(object):
+    def __init__(self, mean=0., std=1.):
+        self.std = std
+        self.mean = mean
+
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
+
+
 def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, save_cp=True, img_scale=0.5):
 
-    trainset = SegSet(dir_img, dir_mask, img_scale)
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,)),
+        AddGaussianNoise(0., 1.)
+    ])
+
+    trainset = SegSet(dir_img, dir_mask, img_scale, trs=transform)
 
     n_val = int(len(trainset) * val_percent)
     n_train = len(trainset) - n_val

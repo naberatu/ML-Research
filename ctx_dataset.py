@@ -30,26 +30,12 @@ class CTDataset(Dataset):
         self.files_path = [non_covid_files, covid_files]
         self.image_list = []
         self.transform = transform
-        self.is_nii = is_nii
-
 
         # if not self.is_nii:
         # read the files from data split text files
         covid_files = read_txt(covid_files)
         non_covid_files = read_txt(non_covid_files)
 
-        # combine the positive and negative files into a cumulative files list
-        # if self.is_nii:
-        #     self.image_list = nib.load(self.root_dir)
-        #     # print(self.image_list.get_data().shape)
-        #     img = np.array(self.image_list.dataobj)
-        #     img = Image.fromarray(img.astype('uint8'), 'RGB')
-        #     self.image_list = self.transform(img)
-        #
-        #     # plt.imshow(img[0])
-        #     # plt.show()
-        #     # exit(0)
-        # else:
         for cls_index in range(len(self.classes)):
             if is_ctx:
                 class_files = [[os.path.join(self.root_dir, x), cls_index] for x in read_txt(self.files_path[cls_index])]
@@ -59,27 +45,9 @@ class CTDataset(Dataset):
             self.image_list += class_files
 
     def __len__(self):
-        # if self.is_nii:
-        #     return len(self.image_list.dataobj)
-        # else:
         return len(self.image_list)
 
     def __getitem__(self, idx):
-        # if self.is_nii:
-        #     nii_img = self.image_list[idx]
-        #     data = torch.from_numpy(np.asarray(nii_img.dataobj))
-        #
-        #     img = Image.open(nii_img).convert('RGB')
-        #     if self.transform:
-        #         img = self.transform(img)
-        #
-        #     plt.imshow(img)
-        #     plt.show()
-        #     exit()
-        #
-        #     target = 'a'
-        #     return data, target
-        # else:
         path = self.image_list[idx][0]
 
         # Read the image
