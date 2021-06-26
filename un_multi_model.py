@@ -7,15 +7,13 @@ easy to test various loss functions and optimizers.
 """
 
 from keras.models import Model
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate, Conv2DTranspose, BatchNormalization, \
-    Dropout, Lambda
+from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, Conv2DTranspose, Dropout
 
 
 ################################################################
 def multi_unet_model(n_classes=4, IMG_HEIGHT=256, IMG_WIDTH=256, IMG_CHANNELS=1):
     # Build the model
     inputs = Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
-    # s = Lambda(lambda x: x / 255)(inputs)   #No need for this if we normalize our inputs beforehand
     s = inputs
 
     # Contraction path
