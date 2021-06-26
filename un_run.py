@@ -65,47 +65,17 @@ DEVICE = '/physical_device:GPU:0'
 config = tf_v1.ConfigProto(device_count={'GPU': 1, 'CPU': 8})
 K.set_session(tf_v1.Session(config=config))
 
-IM_SIZE = 256       # 256 x 256 square images.
+IM_SIZE = 512       # 256 x 256 square images.
 # IM_SIZE = 128       # 128 x 128 patch images.
 CLASSES = 4         # Background (0) + 3 classes (1-3).
 
-# Read images & other files from Tiff.
-TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
-TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
-
-# for directory_path in glob.glob(dir_mask2):     # NOTE: Update this back to dir_mask1
-    # for img_path in glob.glob(os.path.join(directory_path, "*.jpg")):
-#         img = cv2.imread(img_path, 0)
-#         img = cv2.resize(img, (IM_SIZE, IM_SIZE))
-#         # Code for saving new masks.
-#         img[img <= 55] = 0
-#         img[img > 210] = 2
-#         img[img > 140] = 1
-#         img[img > 55] = 3
-#         print("Image", counter, ":", np.unique(img))
-#         name = dir_mask + "mask" + str(counter) + ".jpg"
-#         cv2.imwrite(name, img)
-#         counter += 1
-#         # ============================================
-#         # TRAIN_MASKS.append(img)
-# # TRAIN_MASKS = np.array(TRAIN_MASKS)
-# TRAIN_MASKS = np.array(nib)
-# sys.exit()
+# Read from TIFF images (MedSeg).
+# TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
+# TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
 
 # USED FOR SANDSTONE IMAGES.
-# # Retrieve Images as RGB files (0 - 255)
-# for directory_path in glob.glob(dir_sandstone + "images/"):
-#     for img_path in glob.glob(os.path.join(directory_path, "*.jpg")):
-#         img = cv2.imread(img_path, 0)
-#         TRAIN_IMAGS.append(img)
-# TRAIN_IMAGS = np.array(TRAIN_IMAGS)
-#
-# # Retrieve Masks as RGB files (0 - 255)
-# for directory_path in glob.glob(dir_sandstone + "masks/"):
-#     for img_path in glob.glob(os.path.join(directory_path, "*.jpg")):
-#         img = cv2.imread(img_path, 0)
-#         TRAIN_MASKS.append(img)
-# TRAIN_MASKS = np.array(TRAIN_MASKS)
+TRAIN_IMAGS = np.array(tifffile.imread(dir_sandstone + "images.tiff")).astype(np.int8)
+TRAIN_MASKS = np.array(tifffile.imread(dir_sandstone + "masks.tiff")).astype(np.int8)
 
 # Assign labels
 labeler = LabelEncoder()
@@ -144,7 +114,6 @@ IM_HT = x_train.shape[1]
 IM_WD = x_train.shape[2]
 IM_CH = x_train.shape[3]
 
-# model = multi_unet_model(n_classes=CLASSES, IMG_HEIGHT=IM_HT, IMG_WIDTH=IM_WD, IMG_CHANNELS=IM_CH)
 model = multi_unet_model(n_classes=CLASSES, IMG_HEIGHT=IM_HT, IMG_WIDTH=IM_WD, IMG_CHANNELS=IM_CH)
 model.compile(optimizer="adam", loss='categorical_crossentropy', metrics=[keras.metrics.MeanIoU(num_classes=CLASSES)])
 # model.summary()
@@ -152,7 +121,7 @@ model.compile(optimizer="adam", loss='categorical_crossentropy', metrics=[keras.
 # =============================================================
 # NOTE: Model-fitting parameters.
 # =============================================================
-history = model.fit(x_train, y_train_cat, batch_size=8, verbose=1, epochs=20, validation_data=(x_test, y_test_cat),
+history = model.fit(x_train, y_train_cat, batch_size=8, verbose=2, epochs=50, validation_data=(x_test, y_test_cat),
                     class_weight=weights, shuffle=False)
 model.save("test.hdf5")
 
@@ -183,7 +152,6 @@ print("Mean IoU =", IOU_keras.result().numpy())
 
 # To calculate I0U for each class...
 values = np.array(IOU_keras.get_weights()).reshape(CLASSES, CLASSES)
-print(values)
 
 # Store metrics
 TP, FP, FN, IoU = [], [], [], []
