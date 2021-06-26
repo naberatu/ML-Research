@@ -1,7 +1,39 @@
-Cross Entropy: 	15.049730107188225
-Dice Coeff: 	0.4082766009202706
-Sensitivity: 	0.502510700840503
-Specificity: 	0.2826806757366285
-Precision: 		0.27475148101802915
-G-Mean: 		0.30819844733923674
-F2 Score: 		0.14428040804341435
+=========================================
+Dataset: MedSeg
+Num Classes: 4
+Epochs: 50
+=========================================
+Mean IoU = 0.24194488
+Backgnd/Misc IoU:		 0.967779541015625
+Ground Glass IoU:		 0.0
+Consolidation IoU:		 0.0
+Pleural Eff. IoU:		 0.0
+=========================================
+For Class: 		Backgnd/Misc...
+Sensitivity: 	0.967779541015625
+Specificity: 	1.0
+Precision: 		1.0
+G-Mean Score: 	0.983757867066701
+F2-Score: 		0.9740564501960264
+-----------------------------------------
+For Class: 		Ground Glass...
+Sensitivity: 	0.0
+Specificity: 	0.9771536610315813
+Precision: 		0.0
+G-Mean Score: 	0.0
+F2-Score: 		0.0
+-----------------------------------------
+For Class: 		Consolidation...
+Sensitivity: 	0.0
+Specificity: 	0.9921800625594995
+Precision: 		0.0
+G-Mean Score: 	0.0
+F2-Score: 		0.0
+-----------------------------------------
+For Class: 		Pleural Eff....
+Sensitivity: 	0.0
+Specificity: 	0.9994515696048345
+Precision: 		0.0
+G-Mean Score: 	0.0
+F2-Score: 		0.0
+=========================================

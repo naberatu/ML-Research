@@ -14,25 +14,23 @@ REFERENCES:
 """
 
 # ===================================================
-# Imports
+# NOTE: Imports
 # ===================================================
-
 # OS & Environment setup
-import glob
+import math
 import os
 import logging
 import tifffile
 import random
-import sys
 import warnings
+import sys
 
-warnings.filterwarnings("ignore")
 # random.seed(12)
+warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 # General imports
-import cv2
 import matplotlib.pyplot as plt
 import tensorflow.compat.v1 as tf_v1
 from un_multi_model import multi_unet_model
@@ -48,16 +46,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
 
 # ===================================================
-# Globals
+# NOTE: Globals
 # ===================================================
-
 # Directories
 dir_medseg = './data/MedSeg/'
-dir_img = './data/MedSeg/tr_ims/'
-dir_mask = './data/MedSeg/tr_masks/'
-dir_mask2 = './data/MedSeg/tr_masks_orig/'
-dir_test = './data/MedSeg/val_ims/'
-dir_checkpoint = 'checkpoints/'
 dir_sandstone = 'C:/Users/elite/Desktop/sandstone_data_for_ML/full_labels_for_deep_learning/128_patches/'
 
 # Other global variables
@@ -65,33 +57,51 @@ DEVICE = '/physical_device:GPU:0'
 config = tf_v1.ConfigProto(device_count={'GPU': 1, 'CPU': 8})
 K.set_session(tf_v1.Session(config=config))
 
-IM_SIZE = 512       # 512 x 512 square images.
-# IM_SIZE = 128       # 128 x 128 patch images.
-CLASSES = 4         # Background (0) + 3 classes (1-3).
+# =============================================================
+# NOTE: Model Parameters
+# =============================================================
 
 # Read from TIFF images (MedSeg).
+DATASET = "MedSeg"
 TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
 TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
+# IM_SIZE = 512
+IM_SIZE = 256
+CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 
-# USED FOR SANDSTONE IMAGES.
+# Read from TIFF images (Sandstone).
+# DATASET = "Sandstone"
 # TRAIN_IMAGS = np.array(tifffile.imread(dir_sandstone + "images.tiff")).astype(np.int8)
 # TRAIN_MASKS = np.array(tifffile.imread(dir_sandstone + "masks.tiff")).astype(np.int8)
+# IM_SIZE = 128       # Due to 128 x 128 patch images.
+# CLASSES = ["Backgd", 'Clay', 'Quartz', 'Pyrite']
 
-# Assign labels
+N_CLASSES = len(CLASSES)
+EPOCHS = 50
+BATCH_SIZE = 8      # Selected for RTX 2060
+# VERBOSITY = 1       # Progress Bar
+VERBOSITY = 2       # One Line/Epoch
+# SHUFFLE = True
+SHUFFLE = False
+
+# =============================================================
+# NOTE: Encoding & Pre-processing.
+# =============================================================
+
+# Assign labels & encode them.
 labeler = LabelEncoder()
 n, h, w = TRAIN_MASKS.shape
 reshaped_masks = TRAIN_MASKS.reshape(-1, 1)
 encoded_masks = labeler.fit_transform(reshaped_masks)
 updated_masks = encoded_masks.reshape(n, h, w)
-
 print(np.unique(updated_masks))
 
-# Prepare train_set
+# Prepare training datasets.
 TRAIN_IMAGS = np.expand_dims(TRAIN_IMAGS, axis=3)
 TRAIN_IMAGS = normalize(TRAIN_IMAGS, axis=1)
 input_masks = np.expand_dims(updated_masks, axis=3)
 
-# Create Dataset
+# Create training & testing datasets.
 N_TEST = 0.1
 N_TRAIN = 0.2
 x1, x_test, y1, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
@@ -101,12 +111,12 @@ x_train, _, y_train, _ = train_test_split(x1, y1, test_size=N_TRAIN, random_stat
 print("Class values in the dataset are ... ", np.unique(y_train))
 
 # Categorize by one-hot encoding.
-masks_cat_train = to_categorical(y_train, num_classes=CLASSES)
-y_train_cat = masks_cat_train.reshape((y_train.shape[0], y_train.shape[1], y_train.shape[2], CLASSES))
-masks_cat_test = to_categorical(y_test, num_classes=CLASSES)
-y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.shape[2], CLASSES))
+masks_cat_train = to_categorical(y_train, num_classes=N_CLASSES)
+y_train_cat = masks_cat_train.reshape((y_train.shape[0], y_train.shape[1], y_train.shape[2], N_CLASSES))
+masks_cat_test = to_categorical(y_test, num_classes=N_CLASSES)
+y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.shape[2], N_CLASSES))
 
-# Class weights
+# Calculate class weights.
 weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
 print("Class weights are...:", weights)
 
@@ -114,74 +124,100 @@ IM_HT = x_train.shape[1]
 IM_WD = x_train.shape[2]
 IM_CH = x_train.shape[3]
 
-model = multi_unet_model(n_classes=CLASSES, IMG_HEIGHT=IM_HT, IMG_WIDTH=IM_WD, IMG_CHANNELS=IM_CH)
-model.compile(optimizer="adam", loss='categorical_crossentropy', metrics=[keras.metrics.MeanIoU(num_classes=CLASSES)])
+model = multi_unet_model(n_classes=N_CLASSES, IMG_HEIGHT=IM_HT, IMG_WIDTH=IM_WD, IMG_CHANNELS=IM_CH)
+model.compile(optimizer="adam", loss='categorical_crossentropy', metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 # model.summary()
 
 # =============================================================
-# NOTE: Model-fitting parameters.
+# NOTE: Model-fitting.
 # =============================================================
-history = model.fit(x_train, y_train_cat, batch_size=8, verbose=2, epochs=50, validation_data=(x_test, y_test_cat),
-                    class_weight=weights, shuffle=False)
+history = model.fit(x_train, y_train_cat, batch_size=BATCH_SIZE, verbose=VERBOSITY, epochs=EPOCHS,
+                    validation_data=(x_test, y_test_cat), class_weight=weights, shuffle=SHUFFLE)
 model.save("test.hdf5")
-
-# Plot model history
-# loss = history.history['loss']
-# val_loss = history.history['val_loss']
-# epochs = range(1, len(loss) + 1)
-# plt.plot(epochs, loss, 'y', label='Training loss')
-# plt.plot(epochs, val_loss, 'r', label='Validation loss')
-# plt.title('Training and validation loss')
-# plt.xlabel('Epochs')
-# plt.ylabel('Loss')
-# plt.legend()
-# plt.show()
 
 # Model Evaluation
 model.load_weights("test.hdf5")
 ypred = model.predict(x_test)
 ypred_argmax = np.argmax(ypred, axis=3)
 
-# Calculate IoU
+# =============================================================
+# NOTE: Metrics & Evaluation.
+# =============================================================
 from keras.metrics import MeanIoU
-IOU_keras = MeanIoU(num_classes=CLASSES)
+IOU_keras = MeanIoU(num_classes=N_CLASSES)
 
 # Generates the confusion matrix.
 IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
-print("Mean IoU =", IOU_keras.result().numpy())
+
+text = ["=========================================",
+        "Dataset: " + DATASET, "Num Classes: " + str(N_CLASSES), "Epochs: " + str(EPOCHS),
+        "=========================================",
+        "Mean IoU = " + str(IOU_keras.result().numpy())]
 
 # To calculate I0U for each class...
-values = np.array(IOU_keras.get_weights()).reshape(CLASSES, CLASSES)
+values = np.array(IOU_keras.get_weights()).reshape(N_CLASSES, N_CLASSES)
 
 # Store metrics
-TP, FP, FN, IoU = [], [], [], []
-for i in range(CLASSES):
+TP, FP, FN, TN, IoU = [], [], [], [], []
+for i in range(N_CLASSES):
     TP.append(values[i, i])
     fp, fn = 0, 0
-    for k in range(CLASSES):
+    for k in range(N_CLASSES):
         if k != i:
             fp += values[i, k]
             fn += values[k, i]
     FP.append(fp)
     FN.append(fn)
     IoU.append(TP[i] / (TP[i] + FP[i] + FN[i]))
-    print("Class", i, "IoU: ", IoU[i])
+    text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
 
+text.append("=========================================")
+for i in range(len(TP)):
+    if i > 0:
+        text.append("-----------------------------------------")
+    sum_of_negatives = 0
+    for k in range(len(TP)):
+        if i != k:
+            sum_of_negatives += TP[k] + FP[k] + FN[k]
+    TN.append(sum_of_negatives)
+
+    # Final metrics.
+    sensitivity = TP[i] / max((TP[i] + FN[i]), 1)
+    specificity = TN[i] / max((TN[i] + FP[i]), 1)
+    precision = TP[i] / max((TP[i] + FP[i]), 1)
+    gmean = math.sqrt(max(sensitivity * specificity, 0))
+    f2_score = (5 * precision * sensitivity) / max(((4 * precision) + sensitivity), 1)
+    text.append("For Class: \t\t" + CLASSES[i] + "...")
+    text.append("Sensitivity: \t" + str(sensitivity))
+    text.append("Specificity: \t" + str(specificity))
+    text.append("Precision: \t\t" + str(precision))
+    text.append("G-Mean Score: \t" + str(gmean))
+    text.append("F2-Score: \t\t" + str(f2_score))
+
+text.append("=========================================")
+
+with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics.txt', 'w') as f:
+    for line in text:
+        print(line)
+    f.writelines('\n'.join(text))
+f.close()
 # plt.imshow(TRAIN_IMAGS[0, :, :, 0], cmap='gray')
 # plt.imshow(TRAIN_MASKS[0], cmap='gray')
 
-#######################################################################
-# Predict on a few images
+# =============================================================
+# NOTE: Display Prediction.
+# =============================================================
 # model = get_model()
 # model.load_weights('???.hdf5')
-test_img_number = random.randint(0, len(x_test))
+
+# Predict on a few images
+test_img_number = random.randint(0, len(x_test) - 1)
 test_img = x_test[test_img_number]
 ground_truth = y_test[test_img_number]
 test_img_norm = test_img[:, :, 0][:, :, None]
 test_img_input = np.expand_dims(test_img_norm, 0)
 prediction = (model.predict(test_img_input))
 predicted_img = np.argmax(prediction, axis=3)[0, :, :]
-
 
 plt.figure(figsize=(12, 8))
 plt.subplot(231)
