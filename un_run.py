@@ -65,8 +65,8 @@ K.set_session(tf_v1.Session(config=config))
 DATASET = "MedSeg"
 TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
 TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
-# IM_SIZE = 512
-IM_SIZE = 256
+IM_SIZE = 512
+# IM_SIZE = 256
 CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 
 # Read from TIFF images (Sandstone).
@@ -77,7 +77,7 @@ CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 # CLASSES = ["Backgd", 'Clay', 'Quartz', 'Pyrite']
 
 N_CLASSES = len(CLASSES)
-EPOCHS = 50
+EPOCHS = 100
 BATCH_SIZE = 8      # Selected for RTX 2060
 # VERBOSITY = 1       # Progress Bar
 VERBOSITY = 2       # One Line/Epoch
@@ -104,8 +104,9 @@ input_masks = np.expand_dims(updated_masks, axis=3)
 # Create training & testing datasets.
 N_TEST = 0.1
 N_TRAIN = 0.2
-x1, x_test, y1, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
-x_train, _, y_train, _ = train_test_split(x1, y1, test_size=N_TRAIN, random_state=0)    # Extra split for quick testing.
+# x1, x_test, y1, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
+# x_train, _, y_train, _ = train_test_split(x1, y1, test_size=N_TRAIN, random_state=0)    # Extra split for quick testing.
+x_train, x_test, y_train, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
 
 # Sanity check
 print("Class values in the dataset are ... ", np.unique(y_train))
@@ -172,14 +173,17 @@ for i in range(N_CLASSES):
     text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
 
 text.append("=========================================")
-for i in range(len(TP)):
+num_vals = len(TP)
+for i in range(num_vals):
     if i > 0:
         text.append("-----------------------------------------")
-    sum_of_negatives = 0
-    for k in range(len(TP)):
-        if i != k:
-            sum_of_negatives += TP[k] + FP[k] + FN[k]
-    TN.append(sum_of_negatives)
+    negatives = 0
+    for j in range(num_vals):
+        if j != i:
+            for k in range(num_vals):
+                if k != i:
+                    negatives += values[j, k]
+    TN.append(negatives)
 
     # Final metrics.
     sensitivity = TP[i] / max((TP[i] + FN[i]), 1)
