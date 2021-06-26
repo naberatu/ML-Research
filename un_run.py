@@ -65,17 +65,17 @@ DEVICE = '/physical_device:GPU:0'
 config = tf_v1.ConfigProto(device_count={'GPU': 1, 'CPU': 8})
 K.set_session(tf_v1.Session(config=config))
 
-IM_SIZE = 512       # 256 x 256 square images.
+IM_SIZE = 512       # 512 x 512 square images.
 # IM_SIZE = 128       # 128 x 128 patch images.
 CLASSES = 4         # Background (0) + 3 classes (1-3).
 
 # Read from TIFF images (MedSeg).
-# TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
-# TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
+TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
+TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
 
 # USED FOR SANDSTONE IMAGES.
-TRAIN_IMAGS = np.array(tifffile.imread(dir_sandstone + "images.tiff")).astype(np.int8)
-TRAIN_MASKS = np.array(tifffile.imread(dir_sandstone + "masks.tiff")).astype(np.int8)
+# TRAIN_IMAGS = np.array(tifffile.imread(dir_sandstone + "images.tiff")).astype(np.int8)
+# TRAIN_MASKS = np.array(tifffile.imread(dir_sandstone + "masks.tiff")).astype(np.int8)
 
 # Assign labels
 labeler = LabelEncoder()
