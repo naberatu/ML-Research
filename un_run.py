@@ -83,6 +83,7 @@ BATCH_SIZE = 8      # Selected for RTX 2060
 VERBOSITY = 2       # One Line/Epoch
 # SHUFFLE = True
 SHUFFLE = False
+OPTIMIZER = keras.optimizers.Adam(lr=0.01)
 
 # =============================================================
 # NOTE: Encoding & Pre-processing.
@@ -103,9 +104,6 @@ input_masks = np.expand_dims(updated_masks, axis=3)
 
 # Create training & testing datasets.
 N_TEST = 0.1
-N_TRAIN = 0.2
-# x1, x_test, y1, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
-# x_train, _, y_train, _ = train_test_split(x1, y1, test_size=N_TRAIN, random_state=0)    # Extra split for quick testing.
 x_train, x_test, y_train, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
 
 # Sanity check
@@ -125,8 +123,13 @@ IM_HT = x_train.shape[1]
 IM_WD = x_train.shape[2]
 IM_CH = x_train.shape[3]
 
-model = multi_unet_model(n_classes=N_CLASSES, IMG_HEIGHT=IM_HT, IMG_WIDTH=IM_WD, IMG_CHANNELS=IM_CH)
-model.compile(optimizer="adam", loss='categorical_crossentropy', metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
+
+def get_model():
+    return multi_unet_model(n_classes=N_CLASSES, IMG_HEIGHT=IM_HT, IMG_WIDTH=IM_WD, IMG_CHANNELS=IM_CH)
+
+
+model = get_model()
+model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy', metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 # model.summary()
 
 # =============================================================
@@ -134,10 +137,10 @@ model.compile(optimizer="adam", loss='categorical_crossentropy', metrics=[keras.
 # =============================================================
 history = model.fit(x_train, y_train_cat, batch_size=BATCH_SIZE, verbose=VERBOSITY, epochs=EPOCHS,
                     validation_data=(x_test, y_test_cat), class_weight=weights, shuffle=SHUFFLE)
-model.save("test.hdf5")
+model.save(DATASET + ".hdf5")
 
 # Model Evaluation
-model.load_weights("test.hdf5")
+model.load_weights(DATASET + ".hdf5")
 ypred = model.predict(x_test)
 ypred_argmax = np.argmax(ypred, axis=3)
 
@@ -211,8 +214,8 @@ f.close()
 # =============================================================
 # NOTE: Display Prediction.
 # =============================================================
-# model = get_model()
-# model.load_weights('???.hdf5')
+model = get_model()
+model.load_weights(DATASET + ".hdf5")
 
 # Predict on a few images
 test_img_number = random.randint(0, len(x_test) - 1)
@@ -225,7 +228,7 @@ predicted_img = np.argmax(prediction, axis=3)[0, :, :]
 
 plt.figure(figsize=(12, 8))
 plt.subplot(231)
-plt.title('Testing Image')
+plt.title('Testing Image ' + str(test_img_number))
 plt.imshow(test_img[:, :, 0], cmap='gray')
 plt.subplot(232)
 plt.title('Testing Label')
