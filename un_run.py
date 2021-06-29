@@ -213,7 +213,7 @@ for i in range(num_vals):
 
 text.append("=========================================")
 
-with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics.txt', 'w') as f:
+with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_temp.txt', 'w') as f:
     for line in text:
         print(line)
     f.writelines('\n'.join(text))
