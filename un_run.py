@@ -77,7 +77,7 @@ CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 # CLASSES = ["Backgd", 'Clay', 'Quartz', 'Pyrite']
 
 N_CLASSES = len(CLASSES)
-EPOCHS = 80
+EPOCHS = 50
 BATCH_SIZE = 8      # Selected for RTX 2060
 # VERBOSITY = 1       # Progress Bar
 VERBOSITY = 2       # One Line/Epoch
@@ -123,7 +123,8 @@ masks_cat_test = to_categorical(y_test, num_classes=N_CLASSES)
 y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.shape[2], N_CLASSES))
 
 # Calculate class weights.
-weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
+# weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
+weights = [0.0000001, 200, 1000, 10000]
 print("Class weights are...:", weights)
 
 IM_HT = x_train.shape[1]
