@@ -65,8 +65,8 @@ K.set_session(tf_v1.Session(config=config))
 DATASET = "MedSeg"
 TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
 TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
-IM_SIZE = 512
-# IM_SIZE = 256
+# IM_SIZE = 512
+IM_SIZE = 256
 CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 
 # Read from TIFF images (Sandstone).
@@ -77,13 +77,14 @@ CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 # CLASSES = ["Backgd", 'Clay', 'Quartz', 'Pyrite']
 
 N_CLASSES = len(CLASSES)
-EPOCHS = 100
+EPOCHS = 50
 BATCH_SIZE = 8      # Selected for RTX 2060
 # VERBOSITY = 1       # Progress Bar
 VERBOSITY = 2       # One Line/Epoch
 # SHUFFLE = True
 SHUFFLE = False
-OPTIMIZER = keras.optimizers.Adam(lr=0.01)
+# OPTIMIZER = keras.optimizers.Adam(lr=0.01)
+OPTIMIZER = "adam"
 
 # =============================================================
 # NOTE: Encoding & Pre-processing.
@@ -129,7 +130,8 @@ def get_model():
 
 
 model = get_model()
-model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy', metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
+model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
+              metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 # model.summary()
 
 # =============================================================
@@ -154,7 +156,9 @@ IOU_keras = MeanIoU(num_classes=N_CLASSES)
 IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
 
 text = ["=========================================",
-        "Dataset: " + DATASET, "Num Classes: " + str(N_CLASSES), "Epochs: " + str(EPOCHS),
+        "Dataset: " + DATASET,
+        "Num Classes: " + str(N_CLASSES),
+        "Epochs: " + str(EPOCHS),
         "=========================================",
         "Mean IoU = " + str(IOU_keras.result().numpy())]
 

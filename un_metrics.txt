@@ -1,39 +1,39 @@
 =========================================
-Dataset: MedSeg
+Dataset: Sandstone
 Num Classes: 4
-Epochs: 100
+Epochs: 50
 =========================================
-Mean IoU = 0.24194488
-Backgnd/Misc IoU:		 0.967779541015625
-Ground Glass IoU:		 0.0
-Consolidation IoU:		 0.0
-Pleural Eff. IoU:		 0.0
+Mean IoU = 0.9157907
+Backgd IoU:		 0.9236061428125064
+Clay IoU:		 0.7912304352793328
+Quartz IoU:		 0.9804303080344974
+Pyrite IoU:		 0.9678958644419918
 =========================================
-For Class: 		Backgnd/Misc...
-Sensitivity: 	0.967779541015625
-Specificity: 	0.0
-Precision: 		1.0
-G-Mean Score: 	0.0
-F2-Score: 		0.9740564501960264
+For Class: 		Backgd...
+Sensitivity: 	0.9737631230565561
+Specificity: 	0.9923196161332039
+Precision: 		0.9471770776247503
+G-Mean Score: 	0.9829975831486828
+F2-Score: 		0.9683271827069735
 -----------------------------------------
-For Class: 		Ground Glass...
-Sensitivity: 	0.0
-Specificity: 	0.9764175415039062
-Precision: 		0.0
-G-Mean Score: 	0.0
-F2-Score: 		0.0
+For Class: 		Clay...
+Sensitivity: 	0.8853418829641447
+Specificity: 	0.9904112988462724
+Precision: 		0.8815643425219702
+G-Mean Score: 	0.9364040817027247
+F2-Score: 		0.8845837871861264
 -----------------------------------------
-For Class: 		Consolidation...
-Sensitivity: 	0.0
-Specificity: 	0.9919281005859375
-Precision: 		0.0
-G-Mean Score: 	0.0
-F2-Score: 		0.0
+For Class: 		Quartz...
+Sensitivity: 	0.9872475428707822
+Specificity: 	0.9770941347028036
+Precision: 		0.9930061325758769
+G-Mean Score: 	0.9821577183114716
+F2-Score: 		0.9883939114210192
 -----------------------------------------
-For Class: 		Pleural Eff....
-Sensitivity: 	0.0
-Specificity: 	0.9994338989257813
-Precision: 		0.0
-G-Mean Score: 	0.0
-F2-Score: 		0.0
+For Class: 		Pyrite...
+Sensitivity: 	0.9930062943350985
+Specificity: 	0.9990767804961682
+Precision: 		0.9745391554451562
+G-Mean Score: 	0.9960369127480871
+F2-Score: 		0.989257086739569
 =========================================
