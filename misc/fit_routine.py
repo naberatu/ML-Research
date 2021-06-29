@@ -33,7 +33,7 @@ def fit(model, train_data_loader, test_data_loader, optimizer, epochs=10, criter
 
 
 def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.CrossEntropyLoss(), print_freq=10):
-    path = pathlib.Path('./logs/train_logger/')
+    path = pathlib.Path('../logs/train_logger/')
     try:
         path.mkdir(parents=True, exist_ok=True)
 
@@ -117,7 +117,7 @@ def train(model, train_data_loader, optimizer, epoch, model_name, criterion=nn.C
 
 
 def test(model, test_data_loader, model_name, epoch, criterion=torch.nn.CrossEntropyLoss(), print_freq=10, valsplit=False):
-    path = pathlib.Path('./logs/test_logger')
+    path = pathlib.Path('../logs/test_logger')
     try:
         path.mkdir(parents=True, exist_ok=True)
 

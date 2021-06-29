@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from un_diceloss import dice_coeff
+from misc.un_diceloss import dice_coeff
 
 
 def fit_tensor(prediction, truth, num_classes):

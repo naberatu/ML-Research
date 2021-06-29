@@ -2,45 +2,21 @@ import warnings
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as nnf
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision import transforms as transforms
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
-from torchstat import stat
 
-import temp_dataset
-from nabernet import NaberNet
+from misc.nabernet import NaberNet
 
-import os
-import shutil
-import cv2
 import random
-import matplotlib.pyplot as plt
-from PIL import Image
-import glob
-import shutil
-import numpy as np
-import seaborn as sns
 
-from torchvision.models import vgg16
-from torchvision.models import resnet18
-from torchvision.models import resnet50
-from torchvision.models import resnet34
-from torchvision.models import resnet101
-from torchvision.models import resnet152
-
-from ctx_dataset import CTDataset
-from ctx_dataset import compute_metrics
+from misc.ctx_dataset import CTDataset
+from misc.ctx_dataset import compute_metrics
 # from ctxdataset import CTXDataset
 # from ctxdataset import compute_metrics
 from earlystop import EarlyStopping
-
-import itertools
-import threading
-import time
-import sys
 
 random.seed(0)
 

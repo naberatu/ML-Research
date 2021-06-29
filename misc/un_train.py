@@ -34,10 +34,10 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import transforms as transforms
 
 # Header files / Helpers
-from un_eval import eval_net
-from un_eval import fit_tensor
-from un_model import UNet
-from un_dataset import SegSet
+from misc.un_eval import eval_net
+from misc.un_eval import fit_tensor
+from misc.un_model import UNet
+from misc.un_dataset import SegSet
 
 # ===================================================
 # Globals
@@ -46,10 +46,10 @@ warnings.filterwarnings("ignore")
 random.seed(12)
 
 # Directories
-dir_img = './data/MedSeg/tr_ims/'
-dir_mask = './data/MedSeg/tr_masks/'
-dir_test = './data/MedSeg/val_ims/'
-dir_checkpoint = 'checkpoints/'
+dir_img = '../data/MedSeg/tr_ims/'
+dir_mask = '../data/MedSeg/tr_masks/'
+dir_test = '../data/MedSeg/val_ims/'
+dir_checkpoint = '../checkpoints/'
 
 
 # ===================================================
@@ -188,7 +188,7 @@ def train_net(net, device, epochs=5, batch_size=8, lr=0.001, val_percent=0.1, sa
             for i, m in enumerate(metrics):
                 logs[i] += str(m / batch_size)
 
-            with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics.txt', 'w') as f:
+            with open('/un_metrics.txt', 'w') as f:
                 f.writelines('\n'.join(logs))
             f.close()
 

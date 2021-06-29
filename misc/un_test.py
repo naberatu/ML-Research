@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import sys
 
 import numpy as np
 import torch
@@ -9,8 +8,8 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
 
-from un_model import UNet
-from un_dataset import SegSet
+from misc.un_model import UNet
+from misc.un_dataset import SegSet
 
 import matplotlib.pyplot as plt
 

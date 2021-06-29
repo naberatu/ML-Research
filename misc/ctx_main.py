@@ -5,18 +5,15 @@ import os
 import random
 import warnings
 
-from ctx_dataset import CTDataset
-from torchvision.models import resnet18
-from torchvision.models import resnet50
-from torchvision.models import alexnet
+from misc.ctx_dataset import CTDataset
 from nabernet import NaberNet
 
 from fit_routine import *
 from plot import Plot
 
-ORG_PATH = './data/covct/'
-CTX_PATH = './data/CTX/'
-NII_PATH = './data/MedSeg/'
+ORG_PATH = '../data/covct/'
+CTX_PATH = '../data/CTX/'
+NII_PATH = '../data/MedSeg/'
 
 warnings.filterwarnings("ignore")
 random.seed(12)
