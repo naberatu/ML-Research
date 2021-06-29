@@ -3,32 +3,32 @@ Dataset: MedSeg
 Num Classes: 4
 Epochs: 50
 =========================================
-Mean IoU = 0.40923005
-Backgnd/Misc IoU:		 0.9689445881509645
-Ground Glass IoU:		 0.32022813110896015
-Consolidation IoU:		 0.3477474850561306
+Mean IoU = 0.40293014
+Backgnd/Misc IoU:		 0.9706122913839713
+Ground Glass IoU:		 0.3070962082074276
+Consolidation IoU:		 0.3340119640074398
 Pleural Eff. IoU:		 0.0
 =========================================
 For Class: 		Backgnd/Misc...
-Sensitivity: 	0.9798845763366913
-Specificity: 	0.655288131923646
-Precision: 		0.9886088522561103
-G-Mean Score: 	0.8013156266593482
-F2-Score: 		0.9816170913414957
+Sensitivity: 	0.981091869622212
+Specificity: 	0.6776790443123639
+Precision: 		0.9891148340097643
+G-Mean Score: 	0.81539278914411
+F2-Score: 		0.9826860333691866
 -----------------------------------------
 For Class: 		Ground Glass...
-Sensitivity: 	0.5301732941601597
-Specificity: 	0.9836855317733153
-Precision: 		0.44710761321779685
-G-Mean Score: 	0.7221660465557398
-F2-Score: 		0.5111794467840155
+Sensitivity: 	0.5374353900479351
+Specificity: 	0.9828435016284802
+Precision: 		0.41742851843018786
+G-Mean Score: 	0.726783929826314
+F2-Score: 		0.5082140160925029
 -----------------------------------------
 For Class: 		Consolidation...
-Sensitivity: 	0.6119035402770652
-Specificity: 	0.9943100367032418
-Precision: 		0.4461486663424488
-G-Mean Score: 	0.7800139944845427
-F2-Score: 		0.5695809572933681
+Sensitivity: 	0.5044412389918008
+Specificity: 	0.9948202301571888
+Precision: 		0.4971381542029853
+G-Mean Score: 	0.7083984397742564
+F2-Score: 		0.5029635068542924
 -----------------------------------------
 For Class: 		Pleural Eff....
 Sensitivity: 	0.0

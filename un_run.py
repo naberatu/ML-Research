@@ -102,7 +102,6 @@ n, h, w = TRAIN_MASKS.shape
 reshaped_masks = TRAIN_MASKS.reshape(-1, 1)
 encoded_masks = labeler.fit_transform(reshaped_masks)
 updated_masks = encoded_masks.reshape(n, h, w)
-print(np.unique(updated_masks))
 
 # Prepare training datasets.
 TRAIN_IMAGS = np.expand_dims(TRAIN_IMAGS, axis=3)
@@ -124,8 +123,8 @@ y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.sh
 
 # Calculate class weights.
 # weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
-weights = [0.0000001, 200, 1000, 10000]
-print("Class weights are...:", weights)
+weights = [0.00000001, 100, 1000, 10000]
+print("Class weights are...:", weights, "\n")
 
 IM_HT = x_train.shape[1]
 IM_WD = x_train.shape[2]
@@ -229,7 +228,8 @@ model = get_model()
 model.load_weights(DATASET + ".hdf5")
 
 # Predict on a few images
-test_img_number = random.randint(0, len(x_test) - 1)
+test_img_number = 0
+# test_img_number = random.randint(0, len(x_test) - 1)
 test_img = x_test[test_img_number]
 ground_truth = y_test[test_img_number]
 test_img_norm = test_img[:, :, 0][:, :, None]
