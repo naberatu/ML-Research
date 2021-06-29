@@ -83,8 +83,8 @@ BATCH_SIZE = 8      # Selected for RTX 2060
 VERBOSITY = 2       # One Line/Epoch
 # SHUFFLE = True
 SHUFFLE = False
-# OPTIMIZER = keras.optimizers.Adam(lr=0.01)
-OPTIMIZER = "adam"
+OPTIMIZER = keras.optimizers.Adam(lr=0.001)
+# OPTIMIZER = "adam"
 
 # =============================================================
 # NOTE: Encoding & Pre-processing.
