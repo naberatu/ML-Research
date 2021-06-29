@@ -1,28 +1,24 @@
 # UNet (MultiClass) using Tensorflow/Keras
-For research and experimentation using Python and Tensorflow/Keras. 
+For research and experimentation using Python and Tensorflow/Keras.
 
-# Nabernet using Pytorch
-For research and experimentation purposes using Python and Pytorch.
+# Currently-used Semantic Segmentation Networks: 
++ [UNet (MultiClass)](https://github.com/bnsreenu/python_for_microscopists/blob/master/208-simple_multi_unet_model.py)
 
-# Networks Experimented with or used for comparison: 
-+ UNet (MultiClass)
+# Previously-used Neural Networks (Image Classification):
++ Custom, Simple CNN (Image Classification)
 + ResNet-18
 + ResNet-50
 + VGG-16
-+ Simple Convolutional Neural Networks (CNN)
-+ AlexNet
 
-# Datasets tested: 
-+ Medical Segmentation (Chest CTs for MultiClass)
-+ COVIDx CT-1
-+ Covid CT Scans 
-+ CIFAR-10
-+ STL-10
-+ CelebA
+# Datasets used: 
++ [COVID-19 Medical Segmentation <-- (Current)](https://medicalsegmentation.com/covid19/)
++ [COVIDx CT-1](https://www.kaggle.com/dataset/c395fb339f210700ba392d81bf200f766418238c2734e5237b5dd0b6fc724fcb/version/1)
++ [SARS-Cov2-CT](https://www.kaggle.com/plameneduardo/sarscov2-ctscan-dataset)
++ [UCSD-AI4H](https://github.com/UCSD-AI4H/COVID-CT) 
++ [STL-10](https://cs.stanford.edu/~acoates/stl10/)
++ [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html)
 
 # Acknowledgements and Resources: 
 + Many thanks to the mentorship of Professor Nader Bagherzadeh.
 + Many thanks to the mentorship of Mohammed Alnemari. 
-+ Thanks to video guides from Dr. Sreeni Bhattiprolu
-+ Thanks to blog guides from Aayush Agrawal. 
-+ Thanks to PyTorch forums.
++ [Video Guides](https://www.youtube.com/watch?v=XyX5HNuv-xE) by Dr. Sreeni Bhattiprolu.
