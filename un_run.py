@@ -63,21 +63,21 @@ K.set_session(tf_v1.Session(config=config))
 
 # Read from TIFF images (MedSeg).
 DATASET = "MedSeg"
-TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims.tif")).astype(np.int8)
-TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks.tif")).astype(np.int8)
-# IM_SIZE = 512
-IM_SIZE = 256
+TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims_big.tif"))
+TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks_big.tif")).astype(np.int8)
+IM_SIZE = 512
+# IM_SIZE = 256
 CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 
 # Read from TIFF images (Sandstone).
 # DATASET = "Sandstone"
-# TRAIN_IMAGS = np.array(tifffile.imread(dir_sandstone + "images.tiff")).astype(np.int8)
+# TRAIN_IMAGS = np.array(tifffile.imread(dir_sandstone + "images.tiff"))
 # TRAIN_MASKS = np.array(tifffile.imread(dir_sandstone + "masks.tiff")).astype(np.int8)
 # IM_SIZE = 128       # Due to 128 x 128 patch images.
 # CLASSES = ["Backgd", 'Clay', 'Quartz', 'Pyrite']
 
 N_CLASSES = len(CLASSES)
-EPOCHS = 50
+EPOCHS = 80
 BATCH_SIZE = 8      # Selected for RTX 2060
 # VERBOSITY = 1       # Progress Bar
 VERBOSITY = 2       # One Line/Epoch
@@ -89,6 +89,12 @@ OPTIMIZER = "adam"
 # =============================================================
 # NOTE: Encoding & Pre-processing.
 # =============================================================
+
+
+# plt.imshow(TRAIN_IMAGS[0], cmap="gray")
+# plt.show()
+# plt.imshow(TRAIN_MASKS[0])
+# plt.show()
 
 # Assign labels & encode them.
 labeler = LabelEncoder()
