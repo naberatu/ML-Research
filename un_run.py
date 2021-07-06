@@ -78,7 +78,7 @@ CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 
 N_CLASSES = len(CLASSES)
 EPOCHS = 100
-BATCH_SIZE = 2      # Selected for RTX 2060
+BATCH_SIZE = 4      # Selected for RTX 2060
 # VERBOSITY = 1       # Progress Bar
 VERBOSITY = 2       # One Line/Epoch
 # SHUFFLE = True
