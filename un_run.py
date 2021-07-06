@@ -77,13 +77,13 @@ CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 # CLASSES = ["Backgd", 'Clay', 'Quartz', 'Pyrite']
 
 N_CLASSES = len(CLASSES)
-EPOCHS = 50
-BATCH_SIZE = 8      # Selected for RTX 2060
+EPOCHS = 100
+BATCH_SIZE = 2      # Selected for RTX 2060
 # VERBOSITY = 1       # Progress Bar
 VERBOSITY = 2       # One Line/Epoch
 # SHUFFLE = True
 SHUFFLE = False
-OPTIMIZER = keras.optimizers.Adam(lr=0.001)
+OPTIMIZER = keras.optimizers.Adam(lr=0.0005)
 # OPTIMIZER = "adam"
 
 # =============================================================
@@ -123,7 +123,8 @@ y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.sh
 
 # Calculate class weights.
 # weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
-weights = [0.00000001, 100, 1000, 10000]
+# weights = [0.00000001, 100, 1000, 10000]
+weights = [0.00000000001, 1, 10, 10000000000000000]
 print("Class weights are...:", weights, "\n")
 
 IM_HT = x_train.shape[1]
@@ -228,23 +229,35 @@ model = get_model()
 model.load_weights(DATASET + ".hdf5")
 
 # Predict on a few images
-test_img_number = 0
-# test_img_number = random.randint(0, len(x_test) - 1)
-test_img = x_test[test_img_number]
-ground_truth = y_test[test_img_number]
-test_img_norm = test_img[:, :, 0][:, :, None]
-test_img_input = np.expand_dims(test_img_norm, 0)
-prediction = (model.predict(test_img_input))
-predicted_img = np.argmax(prediction, axis=3)[0, :, :]
+ans = 0
+while True:
+    message = "Image to Predict on (0-" + str(len(x_test)) + "): \t"
+    ans = input(message)
+    try:
+        ans = int(ans)
+        if ans > len(x_test) or ans < 0:
+            raise Exception
+            # test_img_number = random.randint(0, len(x_test) - 1)
+        test_img_number = ans
+        test_img = x_test[test_img_number]
+        ground_truth = y_test[test_img_number]
+        test_img_norm = test_img[:, :, 0][:, :, None]
+        test_img_input = np.expand_dims(test_img_norm, 0)
+        prediction = (model.predict(test_img_input))
+        predicted_img = np.argmax(prediction, axis=3)[0, :, :]
 
-plt.figure(figsize=(12, 8))
-plt.subplot(231)
-plt.title('Testing Image ' + str(test_img_number))
-plt.imshow(test_img[:, :, 0], cmap='gray')
-plt.subplot(232)
-plt.title('Testing Label')
-plt.imshow(ground_truth[:, :, 0], cmap='jet')
-plt.subplot(233)
-plt.title('Prediction on test image')
-plt.imshow(predicted_img, cmap='jet')
-plt.show()
+        plt.figure(figsize=(12, 8))
+        plt.subplot(231)
+        plt.title('Testing Image ' + str(test_img_number))
+        plt.imshow(test_img[:, :, 0], cmap='gray')
+        plt.subplot(232)
+        plt.title('Testing Label')
+        plt.imshow(ground_truth[:, :, 0], cmap='jet')
+        plt.subplot(233)
+        plt.title('Prediction on test image')
+        plt.imshow(predicted_img, cmap='jet')
+        plt.show()
+
+    except:
+        print("Exiting...")
+        break
