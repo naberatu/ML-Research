@@ -1,39 +1,39 @@
 =========================================
 Dataset: MedSeg
 Num Classes: 4
-Epochs: 50
+Epochs: 100
 =========================================
-Mean IoU = 0.40293014
-Backgnd/Misc IoU:		 0.9706122913839713
-Ground Glass IoU:		 0.3070962082074276
-Consolidation IoU:		 0.3340119640074398
-Pleural Eff. IoU:		 0.0
+Mean IoU = 0.49179116
+Backgnd/Misc IoU:		 0.977795934211103
+Ground Glass IoU:		 0.4508733736035732
+Consolidation IoU:		 0.31233159242872827
+Pleural Eff. IoU:		 0.2261636961412009
 =========================================
 For Class: 		Backgnd/Misc...
-Sensitivity: 	0.981091869622212
-Specificity: 	0.6776790443123639
-Precision: 		0.9891148340097643
-G-Mean Score: 	0.81539278914411
-F2-Score: 		0.9826860333691866
+Sensitivity: 	0.9843737874193763
+Specificity: 	0.7941265114709039
+Precision: 		0.9932123720289471
+G-Mean Score: 	0.8841477940857798
+F2-Score: 		0.9861288971903017
 -----------------------------------------
 For Class: 		Ground Glass...
-Sensitivity: 	0.5374353900479351
-Specificity: 	0.9828435016284802
-Precision: 		0.41742851843018786
-G-Mean Score: 	0.726783929826314
-F2-Score: 		0.5082140160925029
+Sensitivity: 	0.6635729113390896
+Specificity: 	0.9877254534509711
+Precision: 		0.584479423377587
+G-Mean Score: 	0.8095849892075465
+F2-Score: 		0.6460868342579953
 -----------------------------------------
 For Class: 		Consolidation...
-Sensitivity: 	0.5044412389918008
-Specificity: 	0.9948202301571888
-Precision: 		0.4971381542029853
-G-Mean Score: 	0.7083984397742564
-F2-Score: 		0.5029635068542924
+Sensitivity: 	0.7381869643839924
+Specificity: 	0.9933522979268384
+Precision: 		0.3512401331787064
+G-Mean Score: 	0.8563175330276008
+F2-Score: 		0.6049067738734908
 -----------------------------------------
 For Class: 		Pleural Eff....
-Sensitivity: 	0.0
-Specificity: 	0.9987281799316406
-Precision: 		0.0
-G-Mean Score: 	0.0
-F2-Score: 		0.0
+Sensitivity: 	0.34834754797441364
+Specificity: 	0.9992256525605802
+Precision: 		0.3920215956808638
+G-Mean Score: 	0.5899811911769828
+F2-Score: 		0.35628611928906334
 =========================================
