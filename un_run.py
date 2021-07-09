@@ -89,8 +89,6 @@ OPTIMIZER = keras.optimizers.Adam(lr=0.0005)
 # =============================================================
 # NOTE: Encoding & Pre-processing.
 # =============================================================
-
-
 # plt.imshow(TRAIN_IMAGS[0], cmap="gray")
 # plt.show()
 # plt.imshow(TRAIN_MASKS[0])
@@ -123,8 +121,9 @@ y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.sh
 
 # Calculate class weights.
 # weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
+# weights = [0.00000000001, 1, 10, 10000000000000000]
 # weights = [0.00000001, 100, 1000, 10000]
-weights = [0.00000000001, 1, 10, 10000000000000000]
+weights = [0.00000001, 1, 10, 1000000000]
 print("Class weights are...:", weights, "\n")
 
 IM_HT = x_train.shape[1]
@@ -137,6 +136,7 @@ def get_model():
 
 
 model = get_model()
+# model.load_weights("Sandstone.hdf5")
 model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
               metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 # model.summary()
@@ -173,7 +173,8 @@ text = ["=========================================",
 values = np.array(IOU_keras.get_weights()).reshape(N_CLASSES, N_CLASSES)
 
 # Store metrics
-TP, FP, FN, TN, IoU = [], [], [], [], []
+TP, FP, FN, TN, IoU, Dice = [], [], [], [], [], []
+meanDice = 0
 for i in range(N_CLASSES):
     TP.append(values[i, i])
     fp, fn = 0, 0
@@ -185,6 +186,14 @@ for i in range(N_CLASSES):
     FN.append(fn)
     IoU.append(TP[i] / (TP[i] + FP[i] + FN[i]))
     text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
+
+    Dice.append((2 * TP[i]) / ((2 * TP[i]) + FP[i] + FN[i]))
+    meanDice += Dice[i]
+
+text.append("-----------------------------------------")
+text.append("Mean Dice = " + str(meanDice / N_CLASSES))
+for i in range(N_CLASSES):
+    text.append(CLASSES[i] + " Dice:\t\t " + str(Dice[i]))
 
 text.append("=========================================")
 num_vals = len(TP)

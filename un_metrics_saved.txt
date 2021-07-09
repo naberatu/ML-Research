@@ -3,37 +3,43 @@ Dataset: MedSeg
 Num Classes: 4
 Epochs: 100
 =========================================
-Mean IoU = 0.49179116
-Backgnd/Misc IoU:		 0.977795934211103
-Ground Glass IoU:		 0.4508733736035732
-Consolidation IoU:		 0.31233159242872827
-Pleural Eff. IoU:		 0.2261636961412009
+Mean IoU = 0.46526384
+Backgnd/Misc IoU:		 0.9770879743734425
+Ground Glass IoU:		 0.4289495156599787
+Consolidation IoU:		 0.3564877417837615
+Pleural Eff. IoU:		 0.0985302123026674
+-----------------------------------------
+Mean Dice = 0.5734428144237684
+Backgnd/Misc Dice:		 0.9884112260437887
+Ground Glass Dice:		 0.6003704273091311
+Consolidation Dice:		 0.5256040741142052
+Pleural Eff. Dice:		 0.17938553022794845
 =========================================
 For Class: 		Backgnd/Misc...
-Sensitivity: 	0.9843737874193763
-Specificity: 	0.7941265114709039
-Precision: 		0.9932123720289471
-G-Mean Score: 	0.8841477940857798
-F2-Score: 		0.9861288971903017
+Sensitivity: 	0.9836839554696305
+Specificity: 	0.7889243116160559
+Precision: 		0.9931841515226553
+G-Mean Score: 	0.8809382426802899
+F2-Score: 		0.9855694271149654
 -----------------------------------------
 For Class: 		Ground Glass...
-Sensitivity: 	0.6635729113390896
-Specificity: 	0.9877254534509711
-Precision: 		0.584479423377587
-G-Mean Score: 	0.8095849892075465
-F2-Score: 		0.6460868342579953
+Sensitivity: 	0.670838445807771
+Specificity: 	0.9865372034300467
+Precision: 		0.5432996793597795
+G-Mean Score: 	0.8135152637047183
+F2-Score: 		0.6407551863588916
 -----------------------------------------
 For Class: 		Consolidation...
-Sensitivity: 	0.7381869643839924
-Specificity: 	0.9933522979268384
-Precision: 		0.3512401331787064
-G-Mean Score: 	0.8563175330276008
-F2-Score: 		0.6049067738734908
+Sensitivity: 	0.6246523127639848
+Specificity: 	0.9943874503944234
+Precision: 		0.4536680258875463
+G-Mean Score: 	0.7881284290471692
+F2-Score: 		0.580867349382586
 -----------------------------------------
 For Class: 		Pleural Eff....
-Sensitivity: 	0.34834754797441364
-Specificity: 	0.9992256525605802
-Precision: 		0.3920215956808638
-G-Mean Score: 	0.5899811911769828
-F2-Score: 		0.35628611928906334
+Sensitivity: 	0.5156695156695157
+Specificity: 	0.9988659682883219
+Precision: 		0.10857828434313137
+G-Mean Score: 	0.7176940365406422
+F2-Score: 		0.27995255649724754
 =========================================
