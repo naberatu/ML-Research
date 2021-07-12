@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 import tensorflow.compat.v1 as tf_v1
 from un_multi_model import multi_unet_model
 import numpy as np
+import tensorflow as tf
 
 # Keras and LabelEncoder
 from tensorflow.python.keras import backend as K
@@ -145,29 +146,201 @@ def get_model():
     return multi_unet_model(n_classes=N_CLASSES, IMG_HEIGHT=IM_HT, IMG_WIDTH=IM_WD, IMG_CHANNELS=IM_CH)
 
 
+# # =============================================================
+# # NOTE: Compile and Fit Model.
+# # =============================================================
+
+# model = get_model()
+# # model.load_weights("Sandstone.hdf5")
+# model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
+#               metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
+# # model.summary()
+#
+# # Actual model fitting.
+# history = model.fit(x_train, y_train_cat, batch_size=BATCH_SIZE, verbose=VERBOSITY, epochs=EPOCHS,
+#                     validation_data=(x_test, y_test_cat), class_weight=weights, shuffle=SHUFFLE)
+# model.save(DATASET + ".hdf5")
+#
+# # Model Evaluation
+# model.load_weights(DATASET + ".hdf5")
+# ypred = model.predict(x_test)
+# ypred_argmax = np.argmax(ypred, axis=3)
+#
+# # =============================================================
+# # NOTE: Metrics & Evaluation.
+# # =============================================================
+# from keras.metrics import MeanIoU
+# IOU_keras = MeanIoU(num_classes=N_CLASSES)
+#
+# # Generates the confusion matrix.
+# IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
+#
+# text = ["=========================================",
+#         "Dataset: " + DATASET,
+#         "Num Images: " + str(len(TRAIN_IMAGS)),
+#         "Image Size: " + str(IM_SIZE) + "x" + str(IM_SIZE),
+#         "Num Classes: " + str(N_CLASSES),
+#         "Batch Size: " + str(BATCH_SIZE),
+#         "Epochs: " + str(EPOCHS),
+#         "=========================================",
+#         "Mean IoU = " + str(IOU_keras.result().numpy())]
+#
+# # To calculate I0U for each class...
+# values = np.array(IOU_keras.get_weights()).reshape(N_CLASSES, N_CLASSES)
+#
+# # Store metrics
+# TP, FP, FN, TN, IoU, Dice = [], [], [], [], [], []
+# meanDice = 0
+# for i in range(N_CLASSES):
+#     TP.append(values[i, i])
+#     fp, fn = 0, 0
+#     for k in range(N_CLASSES):
+#         if k != i:
+#             fp += values[i, k]
+#             fn += values[k, i]
+#     FP.append(fp)
+#     FN.append(fn)
+#     IoU.append(TP[i] / (TP[i] + FP[i] + FN[i]))
+#     text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
+#
+#     Dice.append((2 * TP[i]) / ((2 * TP[i]) + FP[i] + FN[i]))
+#     meanDice += Dice[i]
+#
+# text.append("-----------------------------------------")
+# text.append("Mean Dice = " + str(meanDice / N_CLASSES))
+# for i in range(N_CLASSES):
+#     text.append(CLASSES[i] + " Dice:\t\t " + str(Dice[i]))
+#
+# text.append("=========================================")
+# num_vals = len(TP)
+# for i in range(num_vals):
+#     if i > 0:
+#         text.append("-----------------------------------------")
+#     negatives = 0
+#     for j in range(num_vals):
+#         if j != i:
+#             for k in range(num_vals):
+#                 if k != i:
+#                     negatives += values[j, k]
+#     TN.append(negatives)
+#
+#     # Final metrics.
+#     sensitivity = TP[i] / max((TP[i] + FN[i]), 1)
+#     specificity = TN[i] / max((TN[i] + FP[i]), 1)
+#     precision = TP[i] / max((TP[i] + FP[i]), 1)
+#     gmean = math.sqrt(max(sensitivity * specificity, 0))
+#     f2_score = (5 * precision * sensitivity) / max(((4 * precision) + sensitivity), 1)
+#     text.append("For Class: \t\t" + CLASSES[i] + "...")
+#     text.append("Sensitivity: \t" + str(sensitivity))
+#     text.append("Specificity: \t" + str(specificity))
+#     text.append("Precision: \t\t" + str(precision))
+#     text.append("G-Mean Score: \t" + str(gmean))
+#     text.append("F2-Score: \t\t" + str(f2_score))
+#
+# text.append("=========================================")
+#
+# with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_temp.txt', 'w') as f:
+#     for line in text:
+#         print(line)
+#     f.writelines('\n'.join(text))
+# f.close()
+# # plt.imshow(TRAIN_IMAGS[0, :, :, 0], cmap='gray')
+# # plt.imshow(TRAIN_MASKS[0], cmap='gray')
+#
+# # =============================================================
+# # NOTE: Display Prediction.
+# # =============================================================
+# model = get_model()
+# model.load_weights(DATASET + ".hdf5")
+#
+# # Predict on a few images
+# ans = 0
+# while True:
+#     message = "Image to Predict on (0-" + str(len(x_test)) + "): \t"
+#     ans = input(message)
+#     try:
+#         ans = int(ans)
+#         if ans > len(x_test) or ans < 0:
+#             raise Exception
+#             # test_img_number = random.randint(0, len(x_test) - 1)
+#         test_img_number = ans
+#         test_img = x_test[test_img_number]
+#         ground_truth = y_test[test_img_number]
+#         test_img_norm = test_img[:, :, 0][:, :, None]
+#         test_img_input = np.expand_dims(test_img_norm, 0)
+#         prediction = (model.predict(test_img_input))
+#         predicted_img = np.argmax(prediction, axis=3)[0, :, :]
+#
+#         plt.figure(figsize=(12, 8))
+#         plt.subplot(231)
+#         plt.title('Testing Image ' + str(test_img_number))
+#         plt.imshow(test_img[:, :, 0], cmap='gray')
+#         plt.subplot(232)
+#         plt.title('Testing Label')
+#         plt.imshow(ground_truth[:, :, 0], cmap='jet')
+#         plt.subplot(233)
+#         plt.title('Prediction on test image')
+#         plt.imshow(predicted_img, cmap='jet')
+#         plt.show()
+#
+#     except:
+#         print("Exiting...")
+#         break
+
+# # =============================================================
+# # NOTE: PRUNING SECTION
+# # =============================================================
+
+import tensorflow_model_optimization as tfmot
+
 model = get_model()
-# model.load_weights("Sandstone.hdf5")
-model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
-              metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
-# model.summary()
-
-# =============================================================
-# NOTE: Model-fitting.
-# =============================================================
-history = model.fit(x_train, y_train_cat, batch_size=BATCH_SIZE, verbose=VERBOSITY, epochs=EPOCHS,
-                    validation_data=(x_test, y_test_cat), class_weight=weights, shuffle=SHUFFLE)
-model.save(DATASET + ".hdf5")
-
-# Model Evaluation
 model.load_weights(DATASET + ".hdf5")
-ypred = model.predict(x_test)
-ypred_argmax = np.argmax(ypred, axis=3)
+model.compile(optimizer='adam', loss='categorical_crossentropy',
+              metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
+
+with open('un_origin_summary.txt', 'w') as f:
+    model.summary(print_fn=lambda x: f.write(x + '\n'))
+f.close()
+
+prune_low_magnitude = tfmot.sparsity.keras.prune_low_magnitude
+
+# Compute end step to finish pruning after 2 epochs.
+prune_epochs = 2
+validation_split = 0.1      # 10% of training set will be used for validation set.
+
+num_images = TRAIN_IMAGS.shape[0] * (1 - validation_split)
+end_step = np.ceil(num_images / BATCH_SIZE).astype(np.int32) * prune_epochs
+
+# Define model for pruning.
+pruning_params = {
+      'pruning_schedule': tfmot.sparsity.keras.PolynomialDecay(initial_sparsity=0.00,
+                                                               final_sparsity=0.50,
+                                                               begin_step=0,
+                                                               end_step=end_step)
+}
+
+# model_for_pruning = prune_low_magnitude(model.layers[1:], **pruning_params)
+model_for_pruning = prune_low_magnitude(model, **pruning_params)
+
+# `prune_low_magnitude` requires a recompile.
+model_for_pruning.compile(optimizer='adam',
+                          loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                          metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
+
+# print("Pruned Model:")
+# model_for_pruning.summary()
+with open('un_pruned_summary.txt', 'w') as f:
+    model_for_pruning.summary(print_fn=lambda x: f.write(x + '\n'))
+f.close()
 
 # =============================================================
-# NOTE: Metrics & Evaluation.
+# NOTE: ANALYZE PRUNING
 # =============================================================
 from keras.metrics import MeanIoU
 IOU_keras = MeanIoU(num_classes=N_CLASSES)
+
+ypred = model_for_pruning.predict(x_test)
+ypred_argmax = np.argmax(ypred, axis=3)
 
 # Generates the confusion matrix.
 IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
@@ -236,50 +409,6 @@ for i in range(num_vals):
 
 text.append("=========================================")
 
-with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_temp.txt', 'w') as f:
-    for line in text:
-        print(line)
+with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_prune.txt', 'w') as f:
     f.writelines('\n'.join(text))
 f.close()
-# plt.imshow(TRAIN_IMAGS[0, :, :, 0], cmap='gray')
-# plt.imshow(TRAIN_MASKS[0], cmap='gray')
-
-# =============================================================
-# NOTE: Display Prediction.
-# =============================================================
-model = get_model()
-model.load_weights(DATASET + ".hdf5")
-
-# Predict on a few images
-ans = 0
-while True:
-    message = "Image to Predict on (0-" + str(len(x_test)) + "): \t"
-    ans = input(message)
-    try:
-        ans = int(ans)
-        if ans > len(x_test) or ans < 0:
-            raise Exception
-            # test_img_number = random.randint(0, len(x_test) - 1)
-        test_img_number = ans
-        test_img = x_test[test_img_number]
-        ground_truth = y_test[test_img_number]
-        test_img_norm = test_img[:, :, 0][:, :, None]
-        test_img_input = np.expand_dims(test_img_norm, 0)
-        prediction = (model.predict(test_img_input))
-        predicted_img = np.argmax(prediction, axis=3)[0, :, :]
-
-        plt.figure(figsize=(12, 8))
-        plt.subplot(231)
-        plt.title('Testing Image ' + str(test_img_number))
-        plt.imshow(test_img[:, :, 0], cmap='gray')
-        plt.subplot(232)
-        plt.title('Testing Label')
-        plt.imshow(ground_truth[:, :, 0], cmap='jet')
-        plt.subplot(233)
-        plt.title('Prediction on test image')
-        plt.imshow(predicted_img, cmap='jet')
-        plt.show()
-
-    except:
-        print("Exiting...")
-        break

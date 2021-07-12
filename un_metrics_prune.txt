@@ -1,0 +1,48 @@
+=========================================
+Dataset: MedSeg
+Num Images: 400
+Image Size: 512x512
+Num Classes: 4
+Batch Size: 4
+Epochs: 100
+=========================================
+Mean IoU = 0.43049696
+Backgnd/Misc IoU:		 0.958571626051287
+Ground Glass IoU:		 0.43445778729515555
+Consolidation IoU:		 0.32895840247222846
+Pleural Eff. IoU:		 0.0
+-----------------------------------------
+Mean Dice = 0.519913654859629
+Backgnd/Misc Dice:		 0.9788476594893609
+Ground Glass Dice:		 0.6057449597236019
+Consolidation Dice:		 0.495062000225553
+Pleural Eff. Dice:		 0.0
+=========================================
+For Class: 		Backgnd/Misc...
+Sensitivity: 	0.9675724785271969
+Specificity: 	0.8240331632124791
+Precision: 		0.9903887194957368
+G-Mean Score: 	0.8929231826524074
+F2-Score: 		0.9720512361708692
+-----------------------------------------
+For Class: 		Ground Glass...
+Sensitivity: 	0.7385720825295099
+Specificity: 	0.9746123143103249
+Precision: 		0.5134114349032569
+G-Mean Score: 	0.8484229173231249
+F2-Score: 		0.6790146342880935
+-----------------------------------------
+For Class: 		Consolidation...
+Sensitivity: 	0.571328523972433
+Specificity: 	0.9884854414897203
+Precision: 		0.4367591180010044
+G-Mean Score: 	0.7514984552576011
+F2-Score: 		0.5381657820319122
+-----------------------------------------
+For Class: 		Pleural Eff....
+Sensitivity: 	0.0
+Specificity: 	0.9979480902119133
+Precision: 		0.0
+G-Mean Score: 	0.0
+F2-Score: 		0.0
+=========================================
