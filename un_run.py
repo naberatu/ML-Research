@@ -23,6 +23,7 @@ import logging
 import tifffile
 import random
 import warnings
+import tempfile
 import sys
 
 # random.seed(12)
@@ -32,16 +33,20 @@ logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 # General imports
 import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow import lite
+import tensorflow_model_optimization as tfmot
 import tensorflow.compat.v1 as tf_v1
 from un_multi_model import multi_unet_model
 import numpy as np
-import tensorflow as tf
+from un_eval import eval
 
 # Keras and LabelEncoder
 from tensorflow.python.keras import backend as K
 from keras.utils import normalize
 from keras.utils import to_categorical
 import keras.metrics
+from keras.metrics import MeanIoU
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
@@ -99,7 +104,7 @@ BATCH_SIZE = 4      # Selected for RTX 2060
 VERBOSITY = 2       # One Line/Epoch
 # SHUFFLE = True
 SHUFFLE = False
-OPTIMIZER = keras.optimizers.Adam(lr=0.0005)
+OPTIMIZER = tf.keras.optimizers.Adam(lr=0.0005)
 # OPTIMIZER = "adam"
 
 # =============================================================
@@ -127,7 +132,7 @@ N_TEST = 0.1
 x_train, x_test, y_train, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
 
 # Sanity check
-print("Class values in the dataset are ... ", np.unique(y_train))
+# print("Class values in the dataset are ... ", np.unique(y_train))
 
 # Categorize by one-hot encoding.
 masks_cat_train = to_categorical(y_train, num_classes=N_CLASSES)
@@ -154,103 +159,19 @@ def get_model():
 # # =============================================================
 # # NOTE: Compile and Fit Model.
 # # =============================================================
-
 # model = get_model()
-# # model.load_weights("Sandstone.hdf5")
 # model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
 #               metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
-# # model.summary()
-#
-# # Actual model fitting.
 # history = model.fit(x_train, y_train_cat, batch_size=BATCH_SIZE, verbose=VERBOSITY, epochs=EPOCHS,
 #                     validation_data=(x_test, y_test_cat), class_weight=weights, shuffle=SHUFFLE)
 # model.save(DATASET + ".hdf5")
 #
-# # Model Evaluation
-# model.load_weights(DATASET + ".hdf5")
-# ypred = model.predict(x_test)
-# ypred_argmax = np.argmax(ypred, axis=3)
-#
 # # =============================================================
 # # NOTE: Metrics & Evaluation.
 # # =============================================================
-# from keras.metrics import MeanIoU
-# IOU_keras = MeanIoU(num_classes=N_CLASSES)
-#
-# # Generates the confusion matrix.
-# IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
-#
-# text = ["=========================================",
-#         "Dataset: " + DATASET,
-#         "Num Images: " + str(len(TRAIN_IMAGS)),
-#         "Image Size: " + str(IM_SIZE) + "x" + str(IM_SIZE),
-#         "Num Classes: " + str(N_CLASSES),
-#         "Batch Size: " + str(BATCH_SIZE),
-#         "Epochs: " + str(EPOCHS),
-#         "=========================================",
-#         "Mean IoU = " + str(IOU_keras.result().numpy())]
-#
-# # To calculate I0U for each class...
-# values = np.array(IOU_keras.get_weights()).reshape(N_CLASSES, N_CLASSES)
-#
-# # Store metrics
-# TP, FP, FN, TN, IoU, Dice = [], [], [], [], [], []
-# meanDice = 0
-# for i in range(N_CLASSES):
-#     TP.append(values[i, i])
-#     fp, fn = 0, 0
-#     for k in range(N_CLASSES):
-#         if k != i:
-#             fp += values[i, k]
-#             fn += values[k, i]
-#     FP.append(fp)
-#     FN.append(fn)
-#     IoU.append(TP[i] / (TP[i] + FP[i] + FN[i]))
-#     text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
-#
-#     Dice.append((2 * TP[i]) / ((2 * TP[i]) + FP[i] + FN[i]))
-#     meanDice += Dice[i]
-#
-# text.append("-----------------------------------------")
-# text.append("Mean Dice = " + str(meanDice / N_CLASSES))
-# for i in range(N_CLASSES):
-#     text.append(CLASSES[i] + " Dice:\t\t " + str(Dice[i]))
-#
-# text.append("=========================================")
-# num_vals = len(TP)
-# for i in range(num_vals):
-#     if i > 0:
-#         text.append("-----------------------------------------")
-#     negatives = 0
-#     for j in range(num_vals):
-#         if j != i:
-#             for k in range(num_vals):
-#                 if k != i:
-#                     negatives += values[j, k]
-#     TN.append(negatives)
-#
-#     # Final metrics.
-#     sensitivity = TP[i] / max((TP[i] + FN[i]), 1)
-#     specificity = TN[i] / max((TN[i] + FP[i]), 1)
-#     precision = TP[i] / max((TP[i] + FP[i]), 1)
-#     gmean = math.sqrt(max(sensitivity * specificity, 0))
-#     f2_score = (5 * precision * sensitivity) / max(((4 * precision) + sensitivity), 1)
-#     text.append("For Class: \t\t" + CLASSES[i] + "...")
-#     text.append("Sensitivity: \t" + str(sensitivity))
-#     text.append("Specificity: \t" + str(specificity))
-#     text.append("Precision: \t\t" + str(precision))
-#     text.append("G-Mean Score: \t" + str(gmean))
-#     text.append("F2-Score: \t\t" + str(f2_score))
-#
-# text.append("=========================================")
-#
-# with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_temp.txt', 'w') as f:
-#     for line in text:
-#         print(line)
-#     f.writelines('\n'.join(text))
-# f.close()
-# # plt.imshow(TRAIN_IMAGS[0, :, :, 0], cmap='gray')
-# # plt.imshow(TRAIN_MASKS[0], cmap='gray')
+# model.load_weights(DATASET + ".hdf5")
+# eval(FNAME="un_metrics_temp", DATASET=DATASET, MODEL=model, BATCH=BATCH_SIZE, EPOCHS=EPOCHS, CLASSES=CLASSES,
+#      NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test, PRINT=True)
 #
 # # =============================================================
 # # NOTE: Display Prediction.
@@ -292,11 +213,9 @@ def get_model():
 #         print("Exiting...")
 #         break
 
-# # =============================================================
-# # NOTE: PRUNING SECTION
-# # =============================================================
-
-import tensorflow_model_optimization as tfmot
+# =============================================================
+# NOTE: BEGIN PRUNING
+# =============================================================
 
 model = get_model()
 model.load_weights(DATASET + ".hdf5")
@@ -339,81 +258,47 @@ with open('un_pruned_summary.txt', 'w') as f:
 f.close()
 
 # =============================================================
-# NOTE: ANALYZE PRUNING
+# NOTE: EVALUATE PRUNED MODEL
 # =============================================================
-from keras.metrics import MeanIoU
-IOU_keras = MeanIoU(num_classes=N_CLASSES)
+eval(FNAME="un_metrics_prune", DATASET=DATASET, MODEL=model_for_pruning, CLASSES=CLASSES,
+     NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
 
-ypred = model_for_pruning.predict(x_test)
-ypred_argmax = np.argmax(ypred, axis=3)
+# =============================================================
+# NOTE: EXPORT & COMPRESS PRUNED MODEL
+# =============================================================
+model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
+model_for_export.save(DATASET + "_pruned.hdf5")
+pruned_model = tf.keras.models.load_model(DATASET + "_pruned.hdf5")
+print('Saved pruned Keras model to: ', pruned_model)
 
-# Generates the confusion matrix.
-IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
+# converter = lite.TFLiteConverter.from_keras_model(model_for_export)
+# pruned_tflite_model = converter.convert()
+#
+# _, pruned_tflite_file = tempfile.mkstemp('.tflite')
+#
+# with open(pruned_tflite_file, 'wb') as f:
+#   f.write(pruned_tflite_model)
+#
+# print('Saved pruned TFLite model to: ', pruned_tflite_file)
 
-text = ["=========================================",
-        "Dataset: " + DATASET,
-        "Num Images: " + str(len(TRAIN_IMAGS)),
-        "Image Size: " + str(IM_SIZE) + "x" + str(IM_SIZE),
-        "Num Classes: " + str(N_CLASSES),
-        "Batch Size: " + str(BATCH_SIZE),
-        "Epochs: " + str(EPOCHS),
-        "=========================================",
-        "Mean IoU = " + str(IOU_keras.result().numpy())]
+# Returns size of gzipped model, in bytes.
+# def get_gzipped_model_size(file):
+#   import os
+#   import zipfile
+#
+#   _, zipped_file = tempfile.mkstemp('.zip')
+#   with zipfile.ZipFile(zipped_file, 'w', compression=zipfile.ZIP_DEFLATED) as f:
+#     f.write(file)
+#
+#   return os.path.getsize(zipped_file)
 
-# To calculate I0U for each class...
-values = np.array(IOU_keras.get_weights()).reshape(N_CLASSES, N_CLASSES)
+# with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_gzip_info.txt', 'w') as f:
+#     f.writelines('\n'.join(text))
+# f.close()
 
-# Store metrics
-TP, FP, FN, TN, IoU, Dice = [], [], [], [], [], []
-meanDice = 0
-for i in range(N_CLASSES):
-    TP.append(values[i, i])
-    fp, fn = 0, 0
-    for k in range(N_CLASSES):
-        if k != i:
-            fp += values[i, k]
-            fn += values[k, i]
-    FP.append(fp)
-    FN.append(fn)
-    IoU.append(TP[i] / (TP[i] + FP[i] + FN[i]))
-    text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
 
-    Dice.append((2 * TP[i]) / ((2 * TP[i]) + FP[i] + FN[i]))
-    meanDice += Dice[i]
-
-text.append("-----------------------------------------")
-text.append("Mean Dice = " + str(meanDice / N_CLASSES))
-for i in range(N_CLASSES):
-    text.append(CLASSES[i] + " Dice:\t\t " + str(Dice[i]))
-
-text.append("=========================================")
-num_vals = len(TP)
-for i in range(num_vals):
-    if i > 0:
-        text.append("-----------------------------------------")
-    negatives = 0
-    for j in range(num_vals):
-        if j != i:
-            for k in range(num_vals):
-                if k != i:
-                    negatives += values[j, k]
-    TN.append(negatives)
-
-    # Final metrics.
-    sensitivity = TP[i] / max((TP[i] + FN[i]), 1)
-    specificity = TN[i] / max((TN[i] + FP[i]), 1)
-    precision = TP[i] / max((TP[i] + FP[i]), 1)
-    gmean = math.sqrt(max(sensitivity * specificity, 0))
-    f2_score = (5 * precision * sensitivity) / max(((4 * precision) + sensitivity), 1)
-    text.append("For Class: \t\t" + CLASSES[i] + "...")
-    text.append("Sensitivity: \t" + str(sensitivity))
-    text.append("Specificity: \t" + str(specificity))
-    text.append("Precision: \t\t" + str(precision))
-    text.append("G-Mean Score: \t" + str(gmean))
-    text.append("F2-Score: \t\t" + str(f2_score))
-
-text.append("=========================================")
-
-with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_prune.txt', 'w') as f:
-    f.writelines('\n'.join(text))
-f.close()
+# =============================================================
+# NOTE: CONFIRM MODEL COMPRESSION SUCCESSFUL
+# =============================================================
+eval(FNAME="un_metrics_confirm", DATASET=DATASET, MODEL=pruned_model, CLASSES=CLASSES,
+     NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)

@@ -3,8 +3,6 @@ Dataset: MedSeg
 Num Images: 100
 Image Size: 512x512
 Num Classes: 4
-Batch Size: 4
-Epochs: 100
 =========================================
 Mean IoU = 0.46526384
 Backgnd/Misc IoU:		 0.9770879743734425
