@@ -243,19 +243,14 @@ pruning_params = {
                                                                end_step=end_step)
 }
 
-# model_for_pruning = prune_low_magnitude(model.layers[1:], **pruning_params)
 model_for_pruning = prune_low_magnitude(model, **pruning_params)
-
-# `prune_low_magnitude` requires a recompile.
 model_for_pruning.compile(optimizer='adam',
                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                           metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
-# print("Pruned Model:")
-# model_for_pruning.summary()
-with open('un_pruned_summary.txt', 'w') as f:
-    model_for_pruning.summary(print_fn=lambda x: f.write(x + '\n'))
-f.close()
+# with open('un_pruned_summary.txt', 'w') as f:
+#     model_for_pruning.summary(print_fn=lambda x: f.write(x + '\n'))
+# f.close()
 
 # =============================================================
 # NOTE: EVALUATE PRUNED MODEL
@@ -269,6 +264,11 @@ eval(FNAME="un_metrics_prune", DATASET=DATASET, MODEL=model_for_pruning, CLASSES
 model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
 model_for_export.save(DATASET + "_pruned.hdf5")
 pruned_model = tf.keras.models.load_model(DATASET + "_pruned.hdf5")
+
+with open('un_pruned_summary.txt', 'w') as f:
+    pruned_model.summary(print_fn=lambda x: f.write(x + '\n'))
+f.close()
+
 print('Saved pruned Keras model to: ', pruned_model)
 
 # converter = lite.TFLiteConverter.from_keras_model(model_for_export)
