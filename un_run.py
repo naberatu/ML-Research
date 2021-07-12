@@ -19,6 +19,7 @@ REFERENCES:
 # OS & Environment setup
 import math
 import os
+import zipfile
 import logging
 import tifffile
 import random
@@ -246,9 +247,8 @@ model_for_pruning = prune_low_magnitude(model, **pruning_params)
 model_for_pruning.compile(optimizer='adam',
                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                           metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
-# =============================================================
-# NOTE: EVALUATE PRUNED MODEL
-# =============================================================
+
+# Evaluate Pruned Model
 eval(FNAME="un_metrics_prune", DATASET=DATASET, MODEL=model_for_pruning, CLASSES=CLASSES,
      NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
 
@@ -257,41 +257,71 @@ eval(FNAME="un_metrics_prune", DATASET=DATASET, MODEL=model_for_pruning, CLASSES
 # =============================================================
 model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
 model_for_export.save(DATASET + "_pruned.hdf5")
-pruned_model = tf.keras.models.load_model(DATASET + "_pruned.hdf5")
-
 with open('un_pruned_summary.txt', 'w') as f:
     model_for_export.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
-print('Saved Pruned Keras Model: ')
+print('Saved Pruned Keras Model')
 
-# converter = lite.TFLiteConverter.from_keras_model(model_for_export)
-# pruned_tflite_model = converter.convert()
-#
-# _, pruned_tflite_file = tempfile.mkstemp('.tflite')
-#
-# with open(pruned_tflite_file, 'wb') as f:
-#   f.write(pruned_tflite_model)
-#
-# print('Saved pruned TFLite model to: ', pruned_tflite_file)
-
-# Returns size of gzipped model, in bytes.
-# def get_gzipped_model_size(file):
-#   import os
-#   import zipfile
-#
-#   _, zipped_file = tempfile.mkstemp('.zip')
-#   with zipfile.ZipFile(zipped_file, 'w', compression=zipfile.ZIP_DEFLATED) as f:
-#     f.write(file)
-#
-#   return os.path.getsize(zipped_file)
-
-# with open('C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_gzip_info.txt', 'w') as f:
-#     f.writelines('\n'.join(text))
-# f.close()
-
-# =============================================================
-# NOTE: CONFIRM MODEL COMPRESSION SUCCESSFUL
-# =============================================================
+pruned_model = tf.keras.models.load_model(DATASET + "_pruned.hdf5")
 eval(FNAME="un_metrics_confirm", DATASET=DATASET, MODEL=pruned_model, CLASSES=CLASSES,
      NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
 print('Re-evaluated Pruned Model')
+
+# Save a copy as TFLite format.
+converter = lite.TFLiteConverter.from_keras_model(pruned_model)
+pruned_tflite_model = converter.convert()
+
+filename = DATASET + '_pruned.tflite'
+with open(filename, 'wb') as f:
+    f.write(pruned_tflite_model)
+f.close()
+print('Saved Pruned TFLite Model')
+
+# =============================================================
+# NOTE: START QUANTIZING
+# =============================================================
+interpreter = tf.lite.Interpreter(model_content=pruned_tflite_model)
+interpreter.allocate_tensors()
+
+
+def eval_tfl(interp):
+    input_index = interp.get_input_details()[0]['index']
+    output_index = interp.get_output_details()[0]['index']
+    pred = []
+    for i, img in enumerate(x_test):
+        img = np.expand_dims(img, axis=0).astype(np.float32)
+        interp.set_tensor(input_index, img)
+
+        interp.invoke()
+
+        output = interp.tensor(output_index)
+        # plt.imshow(output, cmap='jet')
+        # plt.show()
+        # digit = np.argmax(output()[0])
+        pred.append(output()[0])
+
+    print('\n')
+    ypred_argmax = np.argmax(np.array(pred), axis=3)
+    IOU_keras = MeanIoU(num_classes=N_CLASSES)
+    IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
+    # accuracy = (prediction_digits == y_test).mean()
+    # return accuracy
+    return 0
+
+
+test_accuracy = eval_tfl(interpreter)
+print("Acc: ", test_accuracy)
+
+# # =============================================================
+# # NOTE: COMBINE PRUNE & QUANTIZE
+# # =============================================================
+# converter = lite.TFLiteConverter.from_keras_model(pruned_model)
+# converter.optimizations = [tf.lite.Optimize.DEFAULT]
+# prune_quant_tfl_model = converter.convert()                # Weights are quantized now.
+#
+# filename = DATASET + '_prune_quant.tflite'
+# with open(filename, 'wb') as f:
+#     f.write(prune_quant_tfl_model)
+# f.close()
+# print("Saved Pruned & Quantized TFLite Model")
+
