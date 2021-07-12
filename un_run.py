@@ -65,14 +65,19 @@ K.set_session(tf_v1.Session(config=config))
 TRAIN_IMAGS = []
 TRAIN_MASKS = []
 
+# dir_ims = "images/"
+# dir_masks = "masks/"
+dir_ims = "images1/"
+dir_masks = "masks1/"
+
 # Read from TIFF images (MedSeg).
 DATASET = "MedSeg"
-for tif in os.listdir(dir_medseg + "images/"):
-    ims = np.array(tifffile.imread(dir_medseg + "images/" + tif))
+for tif in os.listdir(dir_medseg + dir_ims):
+    ims = np.array(tifffile.imread(dir_medseg + dir_ims + tif))
     for img in ims:
         TRAIN_IMAGS.append(img)
-for tif in os.listdir(dir_medseg + "masks/"):
-    masks = np.array(tifffile.imread(dir_medseg + "masks/" + tif)).astype(np.int8)
+for tif in os.listdir(dir_medseg + dir_masks):
+    masks = np.array(tifffile.imread(dir_medseg + dir_masks + tif)).astype(np.int8)
     for img in masks:
         TRAIN_MASKS.append(img)
 TRAIN_IMAGS = np.asarray(TRAIN_IMAGS)
@@ -132,10 +137,10 @@ y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.sh
 
 # Calculate class weights.
 # weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
-weights = [0.00000000001, 1, 15, 10000000000000000]
+# weights = [0.00000000001, 1, 15, 10000000000000000]
 # weights = [0.00000001, 100, 1000, 10000]
 # weights = [0.00000001, 1, 10, 1000000000]
-print("Class weights are...:", weights, "\n")
+# print("Class weights are...:", weights, "\n")
 
 IM_HT = x_train.shape[1]
 IM_WD = x_train.shape[2]

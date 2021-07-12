@@ -1,48 +1,48 @@
 =========================================
 Dataset: MedSeg
-Num Images: 400
+Num Images: 100
 Image Size: 512x512
 Num Classes: 4
 Batch Size: 4
 Epochs: 100
 =========================================
-Mean IoU = 0.43049696
-Backgnd/Misc IoU:		 0.958571626051287
-Ground Glass IoU:		 0.43445778729515555
-Consolidation IoU:		 0.32895840247222846
-Pleural Eff. IoU:		 0.0
+Mean IoU = 0.46526384
+Backgnd/Misc IoU:		 0.9770879743734425
+Ground Glass IoU:		 0.4289495156599787
+Consolidation IoU:		 0.3564877417837615
+Pleural Eff. IoU:		 0.0985302123026674
 -----------------------------------------
-Mean Dice = 0.519913654859629
-Backgnd/Misc Dice:		 0.9788476594893609
-Ground Glass Dice:		 0.6057449597236019
-Consolidation Dice:		 0.495062000225553
-Pleural Eff. Dice:		 0.0
+Mean Dice = 0.5734428144237684
+Backgnd/Misc Dice:		 0.9884112260437887
+Ground Glass Dice:		 0.6003704273091311
+Consolidation Dice:		 0.5256040741142052
+Pleural Eff. Dice:		 0.17938553022794845
 =========================================
 For Class: 		Backgnd/Misc...
-Sensitivity: 	0.9675724785271969
-Specificity: 	0.8240331632124791
-Precision: 		0.9903887194957368
-G-Mean Score: 	0.8929231826524074
-F2-Score: 		0.9720512361708692
+Sensitivity: 	0.9836839554696305
+Specificity: 	0.7889243116160559
+Precision: 		0.9931841515226553
+G-Mean Score: 	0.8809382426802899
+F2-Score: 		0.9855694271149654
 -----------------------------------------
 For Class: 		Ground Glass...
-Sensitivity: 	0.7385720825295099
-Specificity: 	0.9746123143103249
-Precision: 		0.5134114349032569
-G-Mean Score: 	0.8484229173231249
-F2-Score: 		0.6790146342880935
+Sensitivity: 	0.670838445807771
+Specificity: 	0.9865372034300467
+Precision: 		0.5432996793597795
+G-Mean Score: 	0.8135152637047183
+F2-Score: 		0.6407551863588916
 -----------------------------------------
 For Class: 		Consolidation...
-Sensitivity: 	0.571328523972433
-Specificity: 	0.9884854414897203
-Precision: 		0.4367591180010044
-G-Mean Score: 	0.7514984552576011
-F2-Score: 		0.5381657820319122
+Sensitivity: 	0.6246523127639848
+Specificity: 	0.9943874503944234
+Precision: 		0.4536680258875463
+G-Mean Score: 	0.7881284290471692
+F2-Score: 		0.580867349382586
 -----------------------------------------
 For Class: 		Pleural Eff....
-Sensitivity: 	0.0
-Specificity: 	0.9979480902119133
-Precision: 		0.0
-G-Mean Score: 	0.0
-F2-Score: 		0.0
+Sensitivity: 	0.5156695156695157
+Specificity: 	0.9988659682883219
+Precision: 		0.10857828434313137
+G-Mean Score: 	0.7176940365406422
+F2-Score: 		0.27995255649724754
 =========================================
