@@ -242,16 +242,10 @@ pruning_params = {
                                                                begin_step=0,
                                                                end_step=end_step)
 }
-
 model_for_pruning = prune_low_magnitude(model, **pruning_params)
 model_for_pruning.compile(optimizer='adam',
                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                           metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
-
-# with open('un_pruned_summary.txt', 'w') as f:
-#     model_for_pruning.summary(print_fn=lambda x: f.write(x + '\n'))
-# f.close()
-
 # =============================================================
 # NOTE: EVALUATE PRUNED MODEL
 # =============================================================
@@ -266,10 +260,9 @@ model_for_export.save(DATASET + "_pruned.hdf5")
 pruned_model = tf.keras.models.load_model(DATASET + "_pruned.hdf5")
 
 with open('un_pruned_summary.txt', 'w') as f:
-    pruned_model.summary(print_fn=lambda x: f.write(x + '\n'))
+    model_for_export.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
-
-print('Saved pruned Keras model to: ', pruned_model)
+print('Saved Pruned Keras Model: ')
 
 # converter = lite.TFLiteConverter.from_keras_model(model_for_export)
 # pruned_tflite_model = converter.convert()
@@ -296,9 +289,9 @@ print('Saved pruned Keras model to: ', pruned_model)
 #     f.writelines('\n'.join(text))
 # f.close()
 
-
 # =============================================================
 # NOTE: CONFIRM MODEL COMPRESSION SUCCESSFUL
 # =============================================================
 eval(FNAME="un_metrics_confirm", DATASET=DATASET, MODEL=pruned_model, CLASSES=CLASSES,
      NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
+print('Re-evaluated Pruned Model')
