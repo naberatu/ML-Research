@@ -61,12 +61,22 @@ K.set_session(tf_v1.Session(config=config))
 # NOTE: Model Parameters
 # =============================================================
 
+TRAIN_IMAGS = []
+TRAIN_MASKS = []
+
 # Read from TIFF images (MedSeg).
 DATASET = "MedSeg"
-TRAIN_IMAGS = np.array(tifffile.imread(dir_medseg + "tr_ims_big.tif"))
-TRAIN_MASKS = np.array(tifffile.imread(dir_medseg + "masks_big.tif")).astype(np.int8)
+for tif in os.listdir(dir_medseg + "images/"):
+    ims = np.array(tifffile.imread(dir_medseg + "images/" + tif))
+    for img in ims:
+        TRAIN_IMAGS.append(img)
+for tif in os.listdir(dir_medseg + "masks/"):
+    masks = np.array(tifffile.imread(dir_medseg + "masks/" + tif)).astype(np.int8)
+    for img in masks:
+        TRAIN_MASKS.append(img)
+TRAIN_IMAGS = np.asarray(TRAIN_IMAGS)
+TRAIN_MASKS = np.asarray(TRAIN_MASKS).astype(np.int8)
 IM_SIZE = 512
-# IM_SIZE = 256
 CLASSES = ["Backgnd/Misc", 'Ground Glass', 'Consolidation', 'Pleural Eff.']
 
 # Read from TIFF images (Sandstone).
@@ -89,9 +99,9 @@ OPTIMIZER = keras.optimizers.Adam(lr=0.0005)
 # =============================================================
 # NOTE: Encoding & Pre-processing.
 # =============================================================
-# plt.imshow(TRAIN_IMAGS[0], cmap="gray")
+# plt.imshow(TRAIN_IMAGS[24], cmap="gray")
 # plt.show()
-# plt.imshow(TRAIN_MASKS[0])
+# plt.imshow(TRAIN_MASKS[24])
 # plt.show()
 
 # Assign labels & encode them.
@@ -103,7 +113,7 @@ updated_masks = encoded_masks.reshape(n, h, w)
 
 # Prepare training datasets.
 TRAIN_IMAGS = np.expand_dims(TRAIN_IMAGS, axis=3)
-TRAIN_IMAGS = normalize(TRAIN_IMAGS, axis=1)
+TRAIN_IMAGS = normalize(TRAIN_IMAGS, axis=1)            # NOTE: Normalization step
 input_masks = np.expand_dims(updated_masks, axis=3)
 
 # Create training & testing datasets.
@@ -121,9 +131,9 @@ y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.sh
 
 # Calculate class weights.
 # weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
-# weights = [0.00000000001, 1, 10, 10000000000000000]
+weights = [0.00000000001, 1, 15, 10000000000000000]
 # weights = [0.00000001, 100, 1000, 10000]
-weights = [0.00000001, 1, 10, 1000000000]
+# weights = [0.00000001, 1, 10, 1000000000]
 print("Class weights are...:", weights, "\n")
 
 IM_HT = x_train.shape[1]
@@ -164,7 +174,10 @@ IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
 
 text = ["=========================================",
         "Dataset: " + DATASET,
+        "Num Images: " + str(len(TRAIN_IMAGS)),
+        "Image Size: " + str(IM_SIZE) + "x" + str(IM_SIZE),
         "Num Classes: " + str(N_CLASSES),
+        "Batch Size: " + str(BATCH_SIZE),
         "Epochs: " + str(EPOCHS),
         "=========================================",
         "Mean IoU = " + str(IOU_keras.result().numpy())]
