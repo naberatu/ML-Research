@@ -288,7 +288,7 @@ def eval_tfl(interp):
     input_index = interp.get_input_details()[0]['index']
     output_index = interp.get_output_details()[0]['index']
     pred = []
-    for i, img in enumerate(x_test):
+    for img in x_test:
         img = np.expand_dims(img, axis=0).astype(np.float32)
         interp.set_tensor(input_index, img)
 
