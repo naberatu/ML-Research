@@ -41,7 +41,8 @@ import tensorflow_model_optimization as tfmot
 import tensorflow.compat.v1 as tf_v1
 from un_multi_model import multi_unet_model
 import numpy as np
-from un_eval import eval
+from un_eval import eval_unet
+from un_eval import eval_tfl
 
 # Keras and LabelEncoder
 from tensorflow.python.keras import backend as K
@@ -168,11 +169,9 @@ def get_model():
 #                     validation_data=(x_test, y_test_cat), class_weight=weights, shuffle=SHUFFLE)
 # model.save(DATASET + ".hdf5")
 #
-# # =============================================================
-# # NOTE: Metrics & Evaluation.
-# # =============================================================
+# # EVAL: Multi-class Segmentation (UNet)
 # model.load_weights(DATASET + ".hdf5")
-# eval(FNAME="un_metrics_temp", DATASET=DATASET, MODEL=model, BATCH=BATCH_SIZE, EPOCHS=EPOCHS, CLASSES=CLASSES,
+# eval_unet(FNAME="un_metrics_temp", DATASET=DATASET, MODEL=model, BATCH=BATCH_SIZE, EPOCHS=EPOCHS, CLASSES=CLASSES,
 #      NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test, PRINT=True)
 #
 # # =============================================================
@@ -216,15 +215,14 @@ def get_model():
 #         break
 
 # =============================================================
-# NOTE: BEGIN PRUNING
+# NOTE: Begin Pruning UNet
 # =============================================================
-
 model = get_model()
 model.load_weights(DATASET + ".hdf5")
 model.compile(optimizer='adam', loss='categorical_crossentropy',
               metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
-with open('un_origin_summary.txt', 'w') as f:
+with open('un_summary_origin.txt', 'w') as f:
     model.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
 
@@ -250,25 +248,28 @@ model_for_pruning.compile(optimizer='adam',
                           metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
 # Evaluate Pruned Model
-eval(FNAME="un_metrics_prune", DATASET=DATASET, MODEL=model_for_pruning, CLASSES=CLASSES,
-     NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
+eval_unet(FNAME="un_metrics_pruned1", DATASET=DATASET, MODEL=model_for_pruning, CLASSES=CLASSES,
+          NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
 
 # =============================================================
-# NOTE: EXPORT & COMPRESS PRUNED MODEL
+# NOTE: Export Pruned Model to hdf5
 # =============================================================
 model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
 model_for_export.save(DATASET + "_pruned.hdf5")
-with open('un_pruned_summary.txt', 'w') as f:
+with open('un_summary_pruned.txt', 'w') as f:
     model_for_export.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
-print('Saved Pruned Keras Model')
+print('SAVED:\t\t Pruned Keras Model')
 
+# EVAL: Re-Loaded Pruned Model (hdf5)
 pruned_model = tf.keras.models.load_model(DATASET + "_pruned.hdf5")
-eval(FNAME="un_metrics_confirm", DATASET=DATASET, MODEL=pruned_model, CLASSES=CLASSES,
-     NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
-print('Re-evaluated Pruned Model')
+eval_unet(FNAME="un_metrics_pruned2", DATASET=DATASET, MODEL=pruned_model, CLASSES=CLASSES,
+          NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
+print('EVALUATED:\t Pruned Keras Model')
 
-# Save a copy as TFLite format.
+# =============================================================
+# NOTE: Convert Pruned Model to TFlite
+# =============================================================
 converter = lite.TFLiteConverter.from_keras_model(pruned_model)
 pruned_tflite_model = converter.convert()
 
@@ -276,114 +277,27 @@ filename = DATASET + '_pruned.tflite'
 with open(filename, 'wb') as f:
     f.write(pruned_tflite_model)
 f.close()
-print('Saved Pruned TFLite Model')
+print('SAVED:\t\t Pruned TFLite Model')
+
+# EVAL: Pruned TFLite File
+eval_tfl(pruned_tflite_model, FNAME="un_metrics_pruned_tfl", DATASET=DATASET, CLASSES=CLASSES, IM_SIZE=IM_SIZE,
+         X_TEST=x_test, Y_TEST=y_test)
+print("EVALUATED:\t Pruned TFLite Model")
 
 # =============================================================
-# NOTE: START QUANTIZING
+# NOTE: Quantize Pruned File
 # =============================================================
-interpreter = tf.lite.Interpreter(model_content=pruned_tflite_model)
-interpreter.allocate_tensors()
+converter = lite.TFLiteConverter.from_keras_model(pruned_model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+prune_quant_tfl_model = converter.convert()                # Weights are quantized now.
 
+filename = DATASET + '_pq.tflite'
+with open(filename, 'wb') as f:
+    f.write(prune_quant_tfl_model)
+f.close()
+print("SAVED:\t\t Pruned & Quantized TFLite Model")
 
-def eval_tfl(interp):
-    input_index = interp.get_input_details()[0]['index']
-    output_index = interp.get_output_details()[0]['index']
-    ypred = []
-    for img in x_test:
-        img = np.expand_dims(img, axis=0).astype(np.float32)
-        interp.set_tensor(input_index, img)
-
-        interp.invoke()
-
-        output = interp.get_tensor(output_index)
-        # plt.imshow(output, cmap='jet')
-        # plt.show()
-        # digit = np.argmax(output()[0])
-        ypred.append(output[0])
-
-    print('\n')
-    ypred_argmax = np.argmax(np.array(ypred), axis=3)
-    IOU_keras = MeanIoU(num_classes=N_CLASSES)
-    IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
-
-    text = ["=========================================",
-            "Dataset: " + DATASET,
-            "Image Size: " + str(IM_SIZE) + "x" + str(IM_SIZE),
-            "Num Classes: " + str(N_CLASSES),
-            "=========================================",
-            "Mean IoU = " + str(IOU_keras.result().numpy())
-            ]
-    values = np.array(IOU_keras.get_weights()).reshape(N_CLASSES, N_CLASSES)
-
-    # Store metrics
-    TP, FP, FN, TN, IoU, Dice = [], [], [], [], [], []
-    meanDice = 0
-    for i in range(N_CLASSES):
-        TP.append(values[i, i])
-        fp, fn = 0, 0
-        for k in range(N_CLASSES):
-            if k != i:
-                fp += values[i, k]
-                fn += values[k, i]
-        FP.append(fp)
-        FN.append(fn)
-        IoU.append(TP[i] / (TP[i] + FP[i] + FN[i]))
-        text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
-
-        Dice.append((2 * TP[i]) / ((2 * TP[i]) + FP[i] + FN[i]))
-        meanDice += Dice[i]
-
-    text.append("-----------------------------------------")
-    text.append("Mean Dice = " + str(meanDice / N_CLASSES))
-    for i in range(N_CLASSES):
-        text.append(CLASSES[i] + " Dice:\t\t " + str(Dice[i]))
-
-    text.append("=========================================")
-    num_vals = len(TP)
-    for i in range(num_vals):
-        if i > 0:
-            text.append("-----------------------------------------")
-        negatives = 0
-        for j in range(num_vals):
-            if j != i:
-                for k in range(num_vals):
-                    if k != i:
-                        negatives += values[j, k]
-        TN.append(negatives)
-
-        # Final metrics.
-        sensitivity = TP[i] / max((TP[i] + FN[i]), 1)
-        specificity = TN[i] / max((TN[i] + FP[i]), 1)
-        precision = TP[i] / max((TP[i] + FP[i]), 1)
-        gmean = math.sqrt(max(sensitivity * specificity, 0))
-        f2_score = (5 * precision * sensitivity) / max(((4 * precision) + sensitivity), 1)
-        text.append("For Class: \t\t" + CLASSES[i] + "...")
-        text.append("Sensitivity: \t" + str(sensitivity))
-        text.append("Specificity: \t" + str(specificity))
-        text.append("Precision: \t\t" + str(precision))
-        text.append("G-Mean Score: \t" + str(gmean))
-        text.append("F2-Score: \t\t" + str(f2_score))
-
-    text.append("=========================================")
-
-    PATH = 'C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_quant.txt'
-    with open(PATH, 'w') as f:
-        f.writelines('\n'.join(text))
-    f.close()
-
-
-eval_tfl(interpreter)
-
-# # =============================================================
-# # NOTE: COMBINE PRUNE & QUANTIZE
-# # =============================================================
-# converter = lite.TFLiteConverter.from_keras_model(pruned_model)
-# converter.optimizations = [tf.lite.Optimize.DEFAULT]
-# prune_quant_tfl_model = converter.convert()                # Weights are quantized now.
-#
-# filename = DATASET + '_prune_quant.tflite'
-# with open(filename, 'wb') as f:
-#     f.write(prune_quant_tfl_model)
-# f.close()
-# print("Saved Pruned & Quantized TFLite Model")
-
+# EVAL: Pruned and Quantized File
+eval_tfl(prune_quant_tfl_model, FNAME="un_metrics_pq_tfl", DATASET=DATASET, CLASSES=CLASSES, IM_SIZE=IM_SIZE,
+         X_TEST=x_test, Y_TEST=y_test)
+print("EVALUATED:\t Pruned & Quantized TFLite Model")
