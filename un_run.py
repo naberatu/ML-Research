@@ -52,6 +52,8 @@ from sklearn.utils import class_weight
 # Directories
 dir_medseg = './data/MedSeg/'
 dir_sandstone = 'C:/Users/elite/Desktop/sandstone_data_for_ML/full_labels_for_deep_learning/128_patches/'
+dir_models = './models/'
+dir_metrics = './metrics/'
 
 # Other global variables
 DEVICE = '/physical_device:GPU:0'
@@ -159,10 +161,10 @@ def get_model():
 #               metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 # history = model.fit(x_train, y_train_cat, batch_size=BATCH_SIZE, verbose=VERBOSITY, epochs=EPOCHS,
 #                     validation_data=(x_test, y_test_cat), class_weight=weights, shuffle=SHUFFLE)
-# model.save(DATASET + ".hdf5")
+# model.save(dir_models + DATASET + ".hdf5")
 #
 # # EVAL: Multi-class Segmentation (UNet)
-# model.load_weights(DATASET + ".hdf5")
+# model.load_weights(dir_models + DATASET + ".hdf5")
 # eval_unet(FNAME="un_metrics_temp", DATASET=DATASET, MODEL=model, BATCH=BATCH_SIZE, EPOCHS=EPOCHS, CLASSES=CLASSES,
 #      NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test, PRINT=True)
 #
@@ -170,7 +172,7 @@ def get_model():
 # # NOTE: Display Prediction.
 # # =============================================================
 # model = get_model()
-# model.load_weights(DATASET + ".hdf5")
+# model.load_weights(dir_models + DATASET + ".hdf5")
 #
 # # Predict on a few images
 # ans = 0
@@ -210,11 +212,11 @@ def get_model():
 # NOTE: Begin Pruning UNet
 # =============================================================
 model = get_model()
-model.load_weights(DATASET + ".hdf5")
+model.load_weights(dir_models + DATASET + ".hdf5")
 model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
               metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
-with open('un_summary_origin.txt', 'w') as f:
+with open('metrics/un_summary_origin.txt', 'w') as f:
     model.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
 
@@ -248,13 +250,13 @@ eval_unet(FNAME="un_metrics_pruned1", DATASET=DATASET, MODEL=model_for_pruning, 
 # =============================================================
 model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
 model_for_export.save(DATASET + "_pruned.hdf5")
-with open('un_summary_pruned.txt', 'w') as f:
+with open('metrics/un_summary_pruned.txt', 'w') as f:
     model_for_export.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
 print('SAVED:\t\t Pruned Keras Model')
 
 # EVAL: Re-Loaded Pruned Model (hdf5)
-pruned_model = tf.keras.models.load_model(DATASET + "_pruned.hdf5")
+pruned_model = tf.keras.models.load_model(dir_models + DATASET + "_pruned.hdf5")
 eval_unet(FNAME="un_metrics_pruned2", DATASET=DATASET, MODEL=pruned_model, CLASSES=CLASSES,
           NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
 print('EVALUATED:\t Pruned Keras Model')

@@ -4,6 +4,10 @@ import math
 import numpy as np
 import tensorflow as tf
 
+# Directories
+dir_models = '.\\models\\'
+dir_metrics = '.\\metrics\\'
+
 
 def eval_unet(FNAME="", DATASET="", MODEL=None, BATCH=0, EPOCHS=0, CLASSES=None, NUM_IMS=0, IM_DIM=32, IM_CH=1,
          TEST_IMS=None, TEST_MASKS=None, PRINT=False):
@@ -86,7 +90,7 @@ def eval_unet(FNAME="", DATASET="", MODEL=None, BATCH=0, EPOCHS=0, CLASSES=None,
 
     text.append("=========================================")
 
-    PATH = 'C:\\Users\\elite\\PycharmProjects\\Pytorch\\' + FNAME + '.txt'
+    PATH = 'C:\\Users\\elite\\PycharmProjects\\Pytorch\\' + dir_metrics + FNAME + '.txt'
     with open(PATH, 'w') as f:
         if PRINT:
             for line in text:
@@ -177,7 +181,7 @@ def eval_tfl(TFLModel, FNAME="", DATASET="", CLASSES=None, IM_SIZE=0, X_TEST=Non
 
     text.append("=========================================")
 
-    PATH = 'C:\\Users\\elite\\PycharmProjects\\Pytorch\\' + FNAME + '.txt'
+    PATH = 'C:\\Users\\elite\\PycharmProjects\\Pytorch\\' + dir_metrics + FNAME + '.txt'
     with open(PATH, 'w') as f:
         f.writelines('\n'.join(text))
     f.close()
