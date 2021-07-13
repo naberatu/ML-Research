@@ -17,18 +17,11 @@ REFERENCES:
 # NOTE: Imports
 # ===================================================
 # OS & Environment setup
-import math
 import os
-import zipfile
 import logging
 import tifffile
-import random
 import warnings
-import copy
-import tempfile
-import sys
 
-# random.seed(12)
 warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
@@ -49,7 +42,6 @@ from tensorflow.python.keras import backend as K
 from keras.utils import normalize
 from keras.utils import to_categorical
 import keras.metrics
-from keras.metrics import MeanIoU
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
@@ -134,7 +126,7 @@ input_masks = np.expand_dims(updated_masks, axis=3)
 N_TEST = 0.1
 x_train, x_test, y_train, y_test = train_test_split(TRAIN_IMAGS, input_masks, test_size=N_TEST, random_state=0)
 
-# Sanity check
+# NOTE: Sanity check
 # print("Class values in the dataset are ... ", np.unique(y_train))
 
 # Categorize by one-hot encoding.
@@ -143,7 +135,7 @@ y_train_cat = masks_cat_train.reshape((y_train.shape[0], y_train.shape[1], y_tra
 masks_cat_test = to_categorical(y_test, num_classes=N_CLASSES)
 y_test_cat = masks_cat_test.reshape((y_test.shape[0], y_test.shape[1], y_test.shape[2], N_CLASSES))
 
-# Calculate class weights.
+# NOTE: Calculate class weights.
 # weights = class_weight.compute_class_weight('balanced', np.unique(encoded_masks), encoded_masks)
 # weights = [0.00000000001, 1, 15, 10000000000000000]
 # weights = [0.00000001, 100, 1000, 10000]
@@ -219,7 +211,7 @@ def get_model():
 # =============================================================
 model = get_model()
 model.load_weights(DATASET + ".hdf5")
-model.compile(optimizer='adam', loss='categorical_crossentropy',
+model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
               metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
 with open('un_summary_origin.txt', 'w') as f:
@@ -243,7 +235,7 @@ pruning_params = {
                                                                end_step=end_step)
 }
 model_for_pruning = prune_low_magnitude(model, **pruning_params)
-model_for_pruning.compile(optimizer='adam',
+model_for_pruning.compile(optimizer=OPTIMIZER,
                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                           metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
