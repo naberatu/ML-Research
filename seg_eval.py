@@ -1,5 +1,5 @@
 from tensorflow.keras.metrics import MeanIoU
-from un_multi_model import multi_unet_model
+from seg_unet import multi_unet_model
 import math
 import numpy as np
 import tensorflow as tf

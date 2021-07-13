@@ -26,22 +26,24 @@ warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
-# General imports
+# Helper Files & Libraries
 import matplotlib.pyplot as plt
+import numpy as np
+from seg_unet import multi_unet_model
+from seg_eval import eval_unet
+from seg_eval import eval_tfl
+
+# Tensorflow Imports
 import tensorflow as tf
 from tensorflow import lite
 import tensorflow_model_optimization as tfmot
 import tensorflow.compat.v1 as tf_v1
-from un_multi_model import multi_unet_model
-import numpy as np
-from un_eval import eval_unet
-from un_eval import eval_tfl
 
-# Keras and LabelEncoder
+# Keras, Metrics, and LabelEncoder
 from tensorflow.python.keras import backend as K
-from keras.utils import normalize
-from keras.utils import to_categorical
-import keras.metrics
+from tensorflow.keras.utils import normalize
+from tensorflow.keras.utils import to_categorical
+import tensorflow.keras.metrics
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
