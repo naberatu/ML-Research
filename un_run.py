@@ -24,6 +24,7 @@ import logging
 import tifffile
 import random
 import warnings
+import copy
 import tempfile
 import sys
 
@@ -287,30 +288,91 @@ interpreter.allocate_tensors()
 def eval_tfl(interp):
     input_index = interp.get_input_details()[0]['index']
     output_index = interp.get_output_details()[0]['index']
-    pred = []
+    ypred = []
     for img in x_test:
         img = np.expand_dims(img, axis=0).astype(np.float32)
         interp.set_tensor(input_index, img)
 
         interp.invoke()
 
-        output = interp.tensor(output_index)
+        output = interp.get_tensor(output_index)
         # plt.imshow(output, cmap='jet')
         # plt.show()
         # digit = np.argmax(output()[0])
-        pred.append(output()[0])
+        ypred.append(output[0])
 
     print('\n')
-    ypred_argmax = np.argmax(np.array(pred), axis=3)
+    ypred_argmax = np.argmax(np.array(ypred), axis=3)
     IOU_keras = MeanIoU(num_classes=N_CLASSES)
     IOU_keras.update_state(y_test[:, :, :, 0], ypred_argmax)
-    # accuracy = (prediction_digits == y_test).mean()
-    # return accuracy
-    return 0
+
+    text = ["=========================================",
+            "Dataset: " + DATASET,
+            "Image Size: " + str(IM_SIZE) + "x" + str(IM_SIZE),
+            "Num Classes: " + str(N_CLASSES),
+            "=========================================",
+            "Mean IoU = " + str(IOU_keras.result().numpy())
+            ]
+    values = np.array(IOU_keras.get_weights()).reshape(N_CLASSES, N_CLASSES)
+
+    # Store metrics
+    TP, FP, FN, TN, IoU, Dice = [], [], [], [], [], []
+    meanDice = 0
+    for i in range(N_CLASSES):
+        TP.append(values[i, i])
+        fp, fn = 0, 0
+        for k in range(N_CLASSES):
+            if k != i:
+                fp += values[i, k]
+                fn += values[k, i]
+        FP.append(fp)
+        FN.append(fn)
+        IoU.append(TP[i] / (TP[i] + FP[i] + FN[i]))
+        text.append(CLASSES[i] + " IoU:\t\t " + str(IoU[i]))
+
+        Dice.append((2 * TP[i]) / ((2 * TP[i]) + FP[i] + FN[i]))
+        meanDice += Dice[i]
+
+    text.append("-----------------------------------------")
+    text.append("Mean Dice = " + str(meanDice / N_CLASSES))
+    for i in range(N_CLASSES):
+        text.append(CLASSES[i] + " Dice:\t\t " + str(Dice[i]))
+
+    text.append("=========================================")
+    num_vals = len(TP)
+    for i in range(num_vals):
+        if i > 0:
+            text.append("-----------------------------------------")
+        negatives = 0
+        for j in range(num_vals):
+            if j != i:
+                for k in range(num_vals):
+                    if k != i:
+                        negatives += values[j, k]
+        TN.append(negatives)
+
+        # Final metrics.
+        sensitivity = TP[i] / max((TP[i] + FN[i]), 1)
+        specificity = TN[i] / max((TN[i] + FP[i]), 1)
+        precision = TP[i] / max((TP[i] + FP[i]), 1)
+        gmean = math.sqrt(max(sensitivity * specificity, 0))
+        f2_score = (5 * precision * sensitivity) / max(((4 * precision) + sensitivity), 1)
+        text.append("For Class: \t\t" + CLASSES[i] + "...")
+        text.append("Sensitivity: \t" + str(sensitivity))
+        text.append("Specificity: \t" + str(specificity))
+        text.append("Precision: \t\t" + str(precision))
+        text.append("G-Mean Score: \t" + str(gmean))
+        text.append("F2-Score: \t\t" + str(f2_score))
+
+    text.append("=========================================")
+
+    PATH = 'C:\\Users\\elite\\PycharmProjects\\Pytorch\\un_metrics_quant.txt'
+    with open(PATH, 'w') as f:
+        f.writelines('\n'.join(text))
+    f.close()
 
 
-test_accuracy = eval_tfl(interpreter)
-print("Acc: ", test_accuracy)
+eval_tfl(interpreter)
 
 # # =============================================================
 # # NOTE: COMBINE PRUNE & QUANTIZE
