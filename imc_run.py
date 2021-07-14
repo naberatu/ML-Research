@@ -15,15 +15,21 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 # Tensorflow imports
-import tensorflow as tf
-from tensorflow.keras.utils import to_categorical
 from imc_dataset import image_dataset_from_directory
+import tensorflow as tf
+import tensorflow.compat.v1 as tf_v1
+from tensorflow.python.keras import backend as K
 
 # Models
 from imc_nabernet import nabernet
 
 # Metrics
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+
+# NOTE: Establish GPU as device-to-use
+DEVICE = '/physical_device:GPU:0'
+config = tf_v1.ConfigProto(device_count={'GPU': 1, 'CPU': 8})
+K.set_session(tf_v1.Session(config=config))
 
 # ===================================================
 # STEP: Model Parameters
@@ -41,27 +47,32 @@ SET_NAME = "UCSD AI4H"      # Contains 746 images.
 IM_SIZE = (300, 300)
 BATCH_SIZE = 8
 VAL_SPLIT = 0.2
-EPOCHS = 20
-OPTIMIZER = 'adam'
+EPOCHS = 10
+OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.001)
 VERBOSITY = 2
-SHUFFLE = True
-# SHUFFLE = False
+# SHUFFLE = True
+SHUFFLE = False
+suffix = ""
 
 # Automatic dataset parameter assignment
 if "ucsd" in SET_NAME.lower():
     CLASSES = ["UCSD_CO", "UCSD_NC"]
     dir_data = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\data\\ct_ucsd\\"
+    suffix = "ucsd"
 elif "sars" in SET_NAME.lower():
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
     dir_data = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\data\\ct_sars2\\"
+    suffix = "sars2"
 elif "x" in SET_NAME.lower():
     CLASSES = ['COVID', 'NONCOV']
     dir_data = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\data\\ct_ctx\\Keras_Split\\"
+    suffix = "ctx"
+
 
 # SELECT: A Keras Model
 # =========================
 N_CLASSES = len(CLASSES)
-MODEL_NAME = "NaberNet_" + SET_NAME.lower().split('-')[0].split(' ')[0]
+MODEL_NAME = "NaberNet_" + suffix
 MODEL = nabernet(n_classes=N_CLASSES, im_size=IM_SIZE)
 
 # ===================================================
@@ -98,28 +109,28 @@ NUM_IMGS = len(train_ds.__dict__['file_paths']) + len(val_ds.__dict__['file_path
 # STEP: Begin Fitting
 # ===================================================
 text = [
+    "==========================================",
     "Dataset Name:\t " + SET_NAME,
     "Model Name:\t\t " + MODEL_NAME.split('_')[0],
     "Classes, Batch:\t " + str(N_CLASSES) + ', ' + str(BATCH_SIZE),
     "Image Size:\t\t " + "{:,}".format(IM_SIZE[0]) + "x" + "{:,}".format(IM_SIZE[1]),
     "Num Images:\t\t " + "{:,}".format(NUM_IMGS),
-    "Num Epochs:\t\t " + "{:,}".format(EPOCHS)
+    "Num Epochs:\t\t " + "{:,}".format(EPOCHS),
+    "=========================================="
 ]
 print()
-print("==========================================")
 for line in text:
     print(line)
-print("==========================================")
 
-# NOTE: Remove this line
-# sys.exit(0)
-
-MODEL.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy', metrics=['accuracy'])
-history = MODEL.fit(train_ds, verbose=VERBOSITY, epochs=EPOCHS, validation_data=val_ds, shuffle=SHUFFLE)
+MODEL.compile(optimizer=OPTIMIZER, loss='binary_crossentropy', metrics=['accuracy'])
+MODEL.fit(train_ds, verbose=VERBOSITY, epochs=EPOCHS, validation_data=val_ds, shuffle=SHUFFLE)
 MODEL.save(dir_models + MODEL_NAME + ".hdf5")
 
 # EVAL: Image Classifier
 MODEL.load_weights(dir_models + MODEL_NAME + ".hdf5")
-_, accuracy = MODEL.evaluate(val_ds)
-print('Accuracy: %.2f' % (accuracy * 100))
+# loss, accuracy = MODEL.evaluate(val_ds)
+
+# model_acc = 'Accuracy: %.2f' % (accuracy * 100) + "%"
+# print(model_acc)
+# print('Loss:', loss)
 

@@ -1,12 +1,7 @@
 import torch
-from torch import nn
 from torchvision.models import resnet18
 import torch.nn.utils.prune as prune
-import torch.nn.functional as F
-import numpy as np
 from torchsummary import summary
-import nabernet
-
 
 # =============================================================
 # NOTE: Begin Pruning Classifier
