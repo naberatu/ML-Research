@@ -112,18 +112,14 @@ for line in text:
 print("==========================================")
 
 # NOTE: Remove this line
-sys.exit(0)
-
-y_train = to_categorical(y_train, N_CLASSES)
-y_test = to_categorical(y_test, N_CLASSES)
+# sys.exit(0)
 
 MODEL.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy', metrics=['accuracy'])
-history = MODEL.fit(x_train, y_train, batch_size=BATCH_SIZE, verbose=VERBOSITY, epochs=EPOCHS,
-                    validation_data=(x_test, y_test), shuffle=SHUFFLE)
+history = MODEL.fit(train_ds, verbose=VERBOSITY, epochs=EPOCHS, validation_data=val_ds, shuffle=SHUFFLE)
 MODEL.save(dir_models + MODEL_NAME + ".hdf5")
 
 # EVAL: Image Classifier
 MODEL.load_weights(dir_models + MODEL_NAME + ".hdf5")
-_, accuracy = MODEL.evaluate(x_test, y_test)
+_, accuracy = MODEL.evaluate(val_ds)
 print('Accuracy: %.2f' % (accuracy * 100))
 
