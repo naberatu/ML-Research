@@ -100,10 +100,9 @@ NUM_IMGS = len(train_ds.__dict__['file_paths']) + len(val_ds.__dict__['file_path
 text = [
     "Dataset Name:\t " + SET_NAME,
     "Model Name:\t\t " + MODEL_NAME.split('_')[0],
-    "Num Classes:\t " + "{:,}".format(N_CLASSES),
+    "Classes, Batch:\t " + str(N_CLASSES) + ', ' + str(BATCH_SIZE),
     "Image Size:\t\t " + "{:,}".format(IM_SIZE[0]) + "x" + "{:,}".format(IM_SIZE[1]),
     "Num Images:\t\t " + "{:,}".format(NUM_IMGS),
-    "Batch Size:\t\t " + "{:,}".format(BATCH_SIZE),
     "Num Epochs:\t\t " + "{:,}".format(EPOCHS)
 ]
 print()
