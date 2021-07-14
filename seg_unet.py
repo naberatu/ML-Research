@@ -5,7 +5,6 @@ Standard Unet
 Model not compiled here, instead will be done externally to make it
 easy to test various loss functions and optimizers.
 """
-import keras.models
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, concatenate, Conv2DTranspose, Dropout
 

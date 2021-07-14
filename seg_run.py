@@ -14,7 +14,7 @@ REFERENCES:
 """
 
 # ===================================================
-# NOTE: Imports
+# STEP: Imports
 # ===================================================
 # OS & Environment setup
 import os
@@ -49,7 +49,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
 
 # ===================================================
-# NOTE: Globals
+# STEP: Globals
 # ===================================================
 # Directories
 dir_medseg = './data/MedSeg/'
@@ -57,13 +57,14 @@ dir_sandstone = 'C:/Users/elite/Desktop/sandstone_data_for_ML/full_labels_for_de
 dir_models = './models/'
 dir_metrics = './metrics/'
 
+
 # Other global variables
 DEVICE = '/physical_device:GPU:0'
 config = tf_v1.ConfigProto(device_count={'GPU': 1, 'CPU': 8})
 K.set_session(tf_v1.Session(config=config))
 
 # =============================================================
-# NOTE: Model Parameters
+# STEP: Model Parameters
 # =============================================================
 
 TRAIN_IMAGS = []
@@ -107,7 +108,7 @@ OPTIMIZER = tf.keras.optimizers.Adam(lr=0.0005)
 # OPTIMIZER = "adam"
 
 # =============================================================
-# NOTE: Encoding & Pre-processing.
+# STEP: Encoding & Pre-processing.
 # =============================================================
 # plt.imshow(TRAIN_IMAGS[24], cmap="gray")
 # plt.show()
@@ -156,7 +157,7 @@ def get_model():
 
 
 # # =============================================================
-# # NOTE: Compile and Fit Model.
+# # STEP: Compile and Fit Model.
 # # =============================================================
 # model = get_model()
 # model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
@@ -171,7 +172,7 @@ def get_model():
 #      NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test, PRINT=True)
 #
 # # =============================================================
-# # NOTE: Display Prediction.
+# # STEP: Display Prediction.
 # # =============================================================
 # model = get_model()
 # model.load_weights(dir_models + DATASET + ".hdf5")
@@ -211,12 +212,12 @@ def get_model():
 #         break
 
 # =============================================================
-# NOTE: Begin Pruning UNet
+# STEP: Begin Pruning UNet
 # =============================================================
 model = get_model()
 model.load_weights(dir_models + DATASET + ".hdf5")
 model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy',
-              metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
+              metrics=[tf.keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
 with open('metrics/un_summary_origin.txt', 'w') as f:
     model.summary(print_fn=lambda x: f.write(x + '\n'))
@@ -241,17 +242,17 @@ pruning_params = {
 model_for_pruning = prune_low_magnitude(model, **pruning_params)
 model_for_pruning.compile(optimizer=OPTIMIZER,
                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                          metrics=[keras.metrics.MeanIoU(num_classes=N_CLASSES)])
+                          metrics=[tf.keras.metrics.MeanIoU(num_classes=N_CLASSES)])
 
 # Evaluate Pruned Model
 eval_unet(FNAME="un_metrics_pruned1", DATASET=DATASET, MODEL=model_for_pruning, CLASSES=CLASSES,
           NUM_IMS=len(TRAIN_IMAGS), IM_DIM=IM_SIZE, IM_CH=IM_CH, TEST_IMS=x_test, TEST_MASKS=y_test)
 
 # =============================================================
-# NOTE: Export Pruned Model to hdf5
+# STEP: Export Pruned Model to hdf5
 # =============================================================
 model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
-model_for_export.save(DATASET + "_pruned.hdf5")
+model_for_export.save(dir_models + DATASET + "_pruned.hdf5")
 with open('metrics/un_summary_pruned.txt', 'w') as f:
     model_for_export.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
@@ -264,12 +265,12 @@ eval_unet(FNAME="un_metrics_pruned2", DATASET=DATASET, MODEL=pruned_model, CLASS
 print('EVALUATED:\t Pruned Keras Model')
 
 # =============================================================
-# NOTE: Convert Pruned Model to TFlite
+# STEP: Convert Pruned Model to TFlite
 # =============================================================
 converter = lite.TFLiteConverter.from_keras_model(pruned_model)
 pruned_tflite_model = converter.convert()
 
-filename = DATASET + '_pruned.tflite'
+filename = dir_models + DATASET + '_pruned.tflite'
 with open(filename, 'wb') as f:
     f.write(pruned_tflite_model)
 f.close()
@@ -281,13 +282,13 @@ eval_tfl(pruned_tflite_model, FNAME="un_metrics_pruned_tfl", DATASET=DATASET, CL
 print("EVALUATED:\t Pruned TFLite Model")
 
 # =============================================================
-# NOTE: Quantize Pruned File
+# STEP: Quantize Pruned File
 # =============================================================
 converter = lite.TFLiteConverter.from_keras_model(pruned_model)
 converter.optimizations = [tf.lite.Optimize.DEFAULT]
 prune_quant_tfl_model = converter.convert()                # Weights are quantized now.
 
-filename = DATASET + '_pq.tflite'
+filename = dir_models + DATASET + '_pq.tflite'
 with open(filename, 'wb') as f:
     f.write(prune_quant_tfl_model)
 f.close()
