@@ -80,6 +80,7 @@ def image_dataset_from_directory(directory,
   if not image_paths:
     raise ValueError('No images found.')
 
+  LENGTH = len(image_paths)
   dataset = paths_and_labels_to_dataset(
       image_paths=image_paths,
       image_size=image_size,
