@@ -14,8 +14,8 @@ def eval_imc_tfl(MNAME='', suffix='', mode='w', dir='', divider='', interpreter=
         #   print('Evaluated on {n} results so far.'.format(n=i))
         # Pre-processing: add batch dimension and convert to float32 to match with
         # the model's input data format.
-        test_image = np.expand_dims(test_image, axis=0).astype(np.float32)
-        interpreter.set_tensor(input_index, test_image)
+        new_image = np.expand_dims(test_image, axis=0).astype(np.float32)
+        interpreter.set_tensor(input_index, new_image)
 
         # Run inference.
         interpreter.invoke()

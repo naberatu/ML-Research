@@ -218,6 +218,7 @@ print('EVALUATED:\t Pruned Keras Model')
 # # =============================================================
 # # STEP: Convert Pruned Model to TFlite
 # # =============================================================
+print("Converting Pruned Model to TFLite...")
 converter = lite.TFLiteConverter.from_keras_model(pruned_model)
 pruned_tflite_model = converter.convert()
 
@@ -232,10 +233,11 @@ interpreter = tf.lite.Interpreter(model_content=pruned_tflite_model)
 interpreter.allocate_tensors()
 eval_imc_tfl(MODEL_NAME, "_pruned", 'a', dir_metrics, divider, interpreter, x_test, y_test)
 print("EVALUATED:\t Pruned TFLite Model")
-#
-# # =============================================================
-# # STEP: Quantize Pruned File
-# # =============================================================
+
+# =============================================================
+# STEP: Quantize Pruned File
+# =============================================================
+print("Quantizing Pruned Model...")
 converter = lite.TFLiteConverter.from_keras_model(pruned_model)
 converter.optimizations = [tf.lite.Optimize.DEFAULT]
 prune_quant_tfl_model = converter.convert()                # Weights are quantized now.
