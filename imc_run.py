@@ -48,7 +48,7 @@ SET_NAME = "UCSD AI4H"      # Contains 746 images.
 
 # SELECT: Training & Testing Parameters
 IM_SIZE = (300, 300)
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 VAL_SPLIT = 0.2
 EPOCHS = 10
 # OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.00001)

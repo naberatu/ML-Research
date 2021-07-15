@@ -1,10 +1,10 @@
 =================================================================
-Dataset Name:	    UCSD AI4H
-Model Name:		    NaberNet
-Classes, Batch:     2, 16
-Image Size:		    300x300
-Num Images:		    746
-Num Epochs:		    10
+Dataset Name:		 UCSD AI4H
+Model Name:			 NaberNet
+Classes, Batch:		 2, 8
+Image Size:			 300x300
+Num Images:			 746
+Num Epochs:			 10
 =================================================================
-Model.Eval() Accuracy:	 71.8%
+Model.Eval() Accuracy:	 73.8%
 =================================================================
