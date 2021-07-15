@@ -7,6 +7,7 @@ def nabernet(n_classes=2, im_size=(224, 224), n_channels=3):
     # Model Parameters
     cdims = [32, 48, 64, 64, 64]
     fdims = [100, 64, 1 if n_classes <= 2 else n_classes]
+    # fdims = [100, 64, n_classes]
 
     inputs = Input(shape=im_size + (n_channels, ))
     x = None
@@ -20,6 +21,7 @@ def nabernet(n_classes=2, im_size=(224, 224), n_channels=3):
         if i < len(fdims) - 1:
             x = Dense(dim, activation='relu')(x)
     outputs = Dense(fdims[-1], activation='sigmoid' if n_classes == 2 else 'softmax')(x)
+    # outputs = Dense(fdims[-1], activation='softmax')(x)
 
     return Model(inputs, outputs)
 # ================================================================
