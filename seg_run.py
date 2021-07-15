@@ -7,9 +7,7 @@ TOPIC:              Using a Multiclass Segmentation model (U-Net) to determine t
                         in human lungs, and compressing the model for low-resource devices.
 REFERENCES:
     Medical Segmentation        (For provided Dataset ~ https://medicalsegmentation.com/covid19/)
-    Rudolph Peinaar             (For Med2Image ~ Converting .NII files into .JPG)
     GitHub user Milesial        (Training, Testing, and logging routine templates ~ https://github.com/milesial)
-    @PtrBlk & Pytorch forums    (For help with color-maps, & dataset setup/processing)
     Dr. Sreenivas Bhattiprolu   (YouTube: 208 Multiclass semantic segmentation with U-Net)
 """
 
