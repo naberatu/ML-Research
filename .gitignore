@@ -11,6 +11,6 @@
 /buffers1.txt
 /params1.txt
 /params2.txt
-/models/*_ucsd.hdf5
-/models/*_sars.hdf5
-/models/*_covidx.hdf5
+/models/*_ucsd*.hdf5
+/models/*_sars*.hdf5
+/models/*_covidx*.hdf5
