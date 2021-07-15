@@ -1,8 +1,14 @@
 
 import numpy as np
+import tensorflow as tf
 
 
-def eval_imc_tfl(MNAME='', suffix='', mode='w', dir='', divider='', interpreter=None, test_images=None, test_labels=None):
+def eval_imc_tfl(MNAME='', suffix='', mode='w', dir='', divider='', model=None, test_images=None, test_labels=None):
+
+    print("Evaluating:\t", MNAME + "...")
+    interpreter = tf.lite.Interpreter(model_content=model)
+    interpreter.allocate_tensors()
+
     input_index = interpreter.get_input_details()[0]["index"]
     output_index = interpreter.get_output_details()[0]["index"]
 
@@ -22,7 +28,6 @@ def eval_imc_tfl(MNAME='', suffix='', mode='w', dir='', divider='', interpreter=
         digit = np.argmax(output()[0])
         prediction_digits.append(digit)
 
-    print('\n')
     # Compare prediction results with ground truth labels to calculate accuracy.
     prediction_digits = np.array(prediction_digits)
     accuracy = (prediction_digits == test_labels).mean()
@@ -32,6 +37,6 @@ def eval_imc_tfl(MNAME='', suffix='', mode='w', dir='', divider='', interpreter=
       divider + "\n",
     ]
 
-    with open(dir + MNAME + ".txt", mode) as f:
+    with open(dir + "imc" + MNAME + ".txt", mode) as f:
         f.write('\n'.join(text))
     f.close()

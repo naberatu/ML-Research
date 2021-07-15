@@ -229,9 +229,7 @@ f.close()
 print('SAVED:\t\t Pruned TFLite Model')
 
 # EVAL: Pruned TFLite File
-interpreter = tf.lite.Interpreter(model_content=pruned_tflite_model)
-interpreter.allocate_tensors()
-eval_imc_tfl(MODEL_NAME, "_pruned", 'a', dir_metrics, divider, interpreter, x_test, y_test)
+eval_imc_tfl(MODEL_NAME, "_pruned", 'a', dir_metrics, divider, pruned_tflite_model, x_test, y_test)
 print("EVALUATED:\t Pruned TFLite Model")
 
 # =============================================================
@@ -249,10 +247,7 @@ f.close()
 print("SAVED:\t\t Pruned & Quantized TFLite Model")
 
 # EVAL: Pruned and Quantized File
-interpreter = tf.lite.Interpreter(model_content=prune_quant_tfl_model)
-interpreter.allocate_tensors()
-
-eval_imc_tfl(MODEL_NAME, "_P&Q", 'a', dir_metrics, divider, interpreter, x_test, y_test, divider)
+eval_imc_tfl(MODEL_NAME, "_Quantized", 'a', dir_metrics, divider, prune_quant_tfl_model, x_test, y_test)
 print("EVALUATED:\t Pruned & Quantized TFLite Model")
 
 
