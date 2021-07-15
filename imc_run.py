@@ -111,10 +111,6 @@ NUM_IMGS = len(x)
 x_train, x_temp, y_train, y_temp = train_test_split(x, y, test_size=0.3, shuffle=SHUFFLE)
 x_val, x_test, y_val, y_test = train_test_split(x_temp, y_temp, test_size=0.5, shuffle=SHUFFLE)
 
-# y_train = to_categorical(y_train, num_classes=N_CLASSES)
-# y_val = to_categorical(y_val, num_classes=N_CLASSES)
-# y_test = to_categorical(y_test, num_classes=N_CLASSES)
-
 # ===================================================
 # STEP: Compile, Fit, and Save Model
 # ===================================================
@@ -136,10 +132,10 @@ for i, line in enumerate(text):
 
 file = dir_models + MODEL_NAME + ".hdf5"
 
-MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
-MODEL.fit(x=x_train, y=y_train, verbose=VERBOSITY, epochs=EPOCHS, validation_data=(x_val, y_val), shuffle=SHUFFLE)
-MODEL.save(file)
-print("\nSaved Model to:\t\t", file)
+# MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
+# MODEL.fit(x=x_train, y=y_train, verbose=VERBOSITY, epochs=EPOCHS, validation_data=(x_val, y_val), shuffle=SHUFFLE)
+# MODEL.save(file)
+# print("\nSaved Model to:\t\t", file)
 
 # ===================================================
 # EVAL: Image Classifier
@@ -149,7 +145,7 @@ MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
 
 
 def eval_imc(M_NAME='', suffix='', mode='w', MODEL=None, x=None, y=None):
-    print("Evaluating Model:\t", M_NAME + suffix + "...", end='\t')
+    print("Evaluating:\t", M_NAME + suffix + "...", end='\t')
 
     _, accuracy = MODEL.evaluate(x, y)
     text.append(M_NAME + suffix + " Accuracy:\t " + "%.1f" % (accuracy * 100) + "%")
@@ -177,6 +173,9 @@ MODEL.compile(optimizer=OPTIMIZER, loss='binary_crossentropy', metrics=['accurac
 with open('metrics/imc_summary_' + MODEL_NAME + '.txt', 'w') as f:
     MODEL.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
+
+print(divider)
+print("Pruning Keras Model...")
 
 prune_low_magnitude = tfmot.sparsity.keras.prune_low_magnitude
 
@@ -215,9 +214,10 @@ pruned_model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
 eval_imc(MODEL_NAME, suffix="_pruned", mode='a', MODEL=pruned_model, x=x_test, y=y_test)
 print('EVALUATED:\t Pruned Keras Model')
 
-# # =============================================================
-# # STEP: Convert Pruned Model to TFlite
-# # =============================================================
+# =============================================================
+# STEP: Convert Pruned Model to TFlite
+# =============================================================
+print(divider)
 print("Converting Pruned Model to TFLite...")
 converter = lite.TFLiteConverter.from_keras_model(pruned_model)
 pruned_tflite_model = converter.convert()

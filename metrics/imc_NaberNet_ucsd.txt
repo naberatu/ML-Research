@@ -6,7 +6,7 @@ Image Size:			 300x300
 Num Images:			 746
 Num Epochs:			 10
 =================================================================
-NaberNet_ucsd Accuracy:	 50.0%
+NaberNet_ucsd Accuracy:	 57.1%
 =================================================================
-NaberNet_ucsd_pruned Accuracy:	 50.0%
+NaberNet_ucsd_pruned Accuracy:	 57.1%
 =================================================================
