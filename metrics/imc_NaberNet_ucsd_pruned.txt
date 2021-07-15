@@ -1,0 +1,12 @@
+Model.Eval() Accuracy:	 51.8%
+
+              precision    recall  f1-score   support
+
+     UCSD_CO       0.46      1.00      0.63        51
+     UCSD_NC       0.00      0.00      0.00        61
+
+    accuracy                           0.46       112
+   macro avg       0.23      0.50      0.31       112
+weighted avg       0.21      0.46      0.28       112
+
+=================================================================

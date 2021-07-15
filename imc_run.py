@@ -62,8 +62,8 @@ OPTIMIZER = tf.keras.optimizers.SGD(learning_rate=0.0005)
 # LOSS = 'categorical_crossentropy'
 LOSS = 'binary_crossentropy'
 VERBOSITY = 2
-# SHUFFLE = True
-SHUFFLE = False
+SHUFFLE = True
+# SHUFFLE = False
 suffix = ""
 
 # Automatic dataset parameter assignment
@@ -148,21 +148,17 @@ MODEL.load_weights(file)
 MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
 
 
-def eval_imc(M_NAME='', MODEL=None, x=None, y=None):
-    print("Evaluating Model:\t", M_NAME + "...", end='\t')
+def eval_imc(M_NAME='', suffix='', mode='w', MODEL=None, x=None, y=None):
+    print("Evaluating Model:\t", M_NAME + suffix + "...", end='\t')
 
     _, accuracy = MODEL.evaluate(x, y)
-    text.append("Model.Eval() Accuracy:\t " + "%.1f" % (accuracy * 100) + "%")
-    predictions = np.argmax(MODEL.predict(x), axis=1)
-
-    crep = metrics.classification_report(y_pred=predictions, y_true=y, target_names=CLASSES)
-    print(crep)
-    text.append("\n" + str(crep))
-    text.append(divider)
+    text.append(M_NAME + suffix + " Accuracy:\t " + "%.1f" % (accuracy * 100) + "%")
+    text.append(divider + "\n")
 
     # Write results to file.
     filename = "imc_" + M_NAME + ".txt"
-    with open(dir_metrics + filename, 'w') as f:
+
+    with open(dir_metrics + filename, mode) as f:
         f.write('\n'.join(text))
     f.close()
 
@@ -170,7 +166,7 @@ def eval_imc(M_NAME='', MODEL=None, x=None, y=None):
     print("COMPLETE")
 
 
-eval_imc(M_NAME=MODEL_NAME, MODEL=MODEL, x=x_test, y=y_test)
+eval_imc(M_NAME=MODEL_NAME, mode='w', MODEL=MODEL, x=x_test, y=y_test)
 
 # =============================================================
 # STEP: Begin Pruning UNet
@@ -216,7 +212,7 @@ print('SAVED:\t\t Pruned Keras Model')
 # EVAL: Re-Loaded Pruned Model (hdf5)
 pruned_model = tf.keras.models.load_model(dir_models + MODEL_NAME + "_pruned.hdf5")
 pruned_model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
-eval_imc(MODEL_NAME + "_pruned", MODEL=pruned_model, x=x_test, y=y_test)
+eval_imc(MODEL_NAME, suffix="_pruned", mode='a', MODEL=pruned_model, x=x_test, y=y_test)
 print('EVALUATED:\t Pruned Keras Model')
 
 # # =============================================================
@@ -232,8 +228,10 @@ f.close()
 print('SAVED:\t\t Pruned TFLite Model')
 
 # EVAL: Pruned TFLite File
-# eval_imc_tfl()
-# print("EVALUATED:\t Pruned TFLite Model")
+interpreter = tf.lite.Interpreter(model_content=pruned_tflite_model)
+interpreter.allocate_tensors()
+eval_imc_tfl(MODEL_NAME, "_pruned", 'a', dir_metrics, divider, interpreter, x_test, y_test)
+print("EVALUATED:\t Pruned TFLite Model")
 #
 # # =============================================================
 # # STEP: Quantize Pruned File
@@ -252,12 +250,7 @@ print("SAVED:\t\t Pruned & Quantized TFLite Model")
 interpreter = tf.lite.Interpreter(model_content=prune_quant_tfl_model)
 interpreter.allocate_tensors()
 
-
-
-test_accuracy = eval_imc_tfl(interpreter, )
-
-print('Pruned and quantized TFLite test_accuracy:', test_accuracy)
-# print('Pruned TF test accuracy:', model_for_pruning_accuracy)
+eval_imc_tfl(MODEL_NAME, "_P&Q", 'a', dir_metrics, divider, interpreter, x_test, y_test, divider)
 print("EVALUATED:\t Pruned & Quantized TFLite Model")
 
 
