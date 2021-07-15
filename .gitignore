@@ -8,11 +8,5 @@
 /*.csv
 /*.xml
 /un_metrics_temp.txt
-/buffers1.txt
-/params1.txt
-/params2.txt
-/seg_models/*_ucsd*.hdf5
-/seg_models/*_sars*.hdf5
-/seg_models/*_covidx*.hdf5
 /imc_models/
 /logs/
