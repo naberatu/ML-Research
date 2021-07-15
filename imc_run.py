@@ -3,6 +3,7 @@
 # ===================================================
 # General imports
 import os
+import random
 import sys
 import warnings
 import logging
@@ -24,7 +25,7 @@ from tensorflow.python.keras import backend as K
 from imc_nabernet import nabernet
 
 # Metrics
-from sklearn.metrics import confusion_matrix
+import sklearn.metrics as metrics
 
 # NOTE: Establish GPU as device-to-use
 DEVICE = '/physical_device:GPU:0'
@@ -35,7 +36,9 @@ K.set_session(tf_v1.Session(config=config))
 # STEP: Model Parameters
 # ===================================================
 dir_models = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\models\\"
+dir_metrics = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\metrics\\"
 dir_data = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\data\\"
+divider = "================================================================="
 CLASSES = []
 
 # SELECT: An Image Dataset
@@ -45,10 +48,11 @@ SET_NAME = "UCSD AI4H"      # Contains 746 images.
 
 # SELECT: Training & Testing Parameters
 IM_SIZE = (300, 300)
-BATCH_SIZE = 8
+BATCH_SIZE = 16
 VAL_SPLIT = 0.2
 EPOCHS = 10
-OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.001)
+# OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.00001)
+OPTIMIZER = tf.keras.optimizers.SGD(learning_rate=0.0001)
 VERBOSITY = 2
 # SHUFFLE = True
 SHUFFLE = False
@@ -96,27 +100,18 @@ val_ds = image_dataset_from_directory(
 )
 NUM_IMGS = len(train_ds.__dict__['file_paths']) + len(val_ds.__dict__['file_paths'])
 
-# plt.figure(figsize=(10, 10))
-# for images, labels in train_ds.take(1):
-#     for i in range(BATCH_SIZE):
-#         ax = plt.subplot(2, 4, i + 1)
-#         plt.imshow(images[i].numpy().astype("uint8"))
-#         plt.title(int(labels[i]))
-#         plt.axis("off")
-# plt.show()
-
 # ===================================================
-# STEP: Begin Fitting
+# STEP: Compile, Fit, and Save Model
 # ===================================================
 text = [
-    "==========================================",
-    "Dataset Name:\t " + SET_NAME,
-    "Model Name:\t\t " + MODEL_NAME.split('_')[0],
-    "Classes, Batch:\t " + str(N_CLASSES) + ', ' + str(BATCH_SIZE),
-    "Image Size:\t\t " + "{:,}".format(IM_SIZE[0]) + "x" + "{:,}".format(IM_SIZE[1]),
-    "Num Images:\t\t " + "{:,}".format(NUM_IMGS),
-    "Num Epochs:\t\t " + "{:,}".format(EPOCHS),
-    "=========================================="
+    divider,
+    "Dataset Name:\t\t " + SET_NAME,
+    "Model Name:\t\t\t " + MODEL_NAME.split('_')[0],
+    "Classes, Batch:\t\t " + str(N_CLASSES) + ', ' + str(BATCH_SIZE),
+    "Image Size:\t\t\t " + "{:,}".format(IM_SIZE[0]) + "x" + "{:,}".format(IM_SIZE[1]),
+    "Num Images:\t\t\t " + "{:,}".format(NUM_IMGS),
+    "Num Epochs:\t\t\t " + "{:,}".format(EPOCHS),
+    divider
 ]
 print()
 for line in text:
@@ -124,13 +119,44 @@ for line in text:
 
 MODEL.compile(optimizer=OPTIMIZER, loss='binary_crossentropy', metrics=['accuracy'])
 MODEL.fit(train_ds, verbose=VERBOSITY, epochs=EPOCHS, validation_data=val_ds, shuffle=SHUFFLE)
-MODEL.save(dir_models + MODEL_NAME + ".hdf5")
+file = dir_models + MODEL_NAME + ".hdf5"
+MODEL.save(file)
+print()
+print("Saved Model to:\t\t", file)
 
+# ===================================================
 # EVAL: Image Classifier
+# ===================================================
 MODEL.load_weights(dir_models + MODEL_NAME + ".hdf5")
-# loss, accuracy = MODEL.evaluate(val_ds)
+MODEL.compile(optimizer=OPTIMIZER, loss='binary_crossentropy', metrics=['accuracy'])
 
-# model_acc = 'Accuracy: %.2f' % (accuracy * 100) + "%"
-# print(model_acc)
-# print('Loss:', loss)
+print("Evaluating Model:\t", MODEL_NAME + "...", end='\t')
+
+# x_test = np.concatenate([x for x, y in val_ds], axis=0)
+# y_test = np.concatenate([y for x, y in val_ds], axis=0)
+
+_, accuracy = MODEL.evaluate(val_ds)
+# _, accuracy = MODEL.evaluate(x_test, y_test)
+text.append("Model.Eval() Accuracy:\t " + "%.1f" % (accuracy * 100) + "%")
+
+# y_pred = MODEL.predict(x_test)
+# y_pred = MODEL.predict(val_ds)
+# y_pred_argmax = np.argmax(y_pred, axis=1)
+
+# crep = metrics.classification_report(y_true, y_pred.rround(), target_names=CLASSES)
+# crep = metrics.classification_report(y_test, y_pred_argmax, target_names=CLASSES)
+#
+# text.append(crep)
+text.append(divider)
+
+# NOTE: Write results to file.
+filename = "imc_" + MODEL_NAME + ".txt"
+with open(dir_metrics + filename, 'w') as f:
+    f.write('\n'.join(text))
+f.close()
+
+print("COMPLETE")
+
+# _, accuracy = MODEL.evaluate(val_ds)
+# print('Accuracy: %.2f' % (accuracy * 100) + "%")
 
