@@ -1,18 +1,22 @@
+# Environment imports
 from torch.utils.data import DataLoader
 from torchvision import transforms as transforms
 import torch.optim as optim
 import os
 import random
 import warnings
+import math
 
+# Image Classifier Utils
+from imc_fit import *
+from imc_plot_run import *
 from imc_dataset import CTDataset
+
+# Imported models
 from imc_nabernet import NaberNet
 from torchvision.models import resnet18
 from torchvision.models import resnet50
 from torchvision.models import vgg16
-
-from imc_fit import *
-from imc_plot_run import *
 
 dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/'
 # dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'
@@ -164,8 +168,8 @@ if __name__ == '__main__':
         valsize = 0
         if 'valset' in locals():
             valsize = len(valset)
-        trainsize, testsize = len(trainset), len(testset)
-        print("TOTAL IMAGES:\t\t", '{:,}'.format(trainsize + valsize + testsize))
+        set_size = len(trainset) + len(testset) + valsize
+        print("TOTAL IMAGES:\t\t", '{:,}'.format(set_size))
         print("EPOCHS:\t\t\t\t", str(EPOCHS))
     else:
         print("TOTAL IMAGES:\t\t", '{:,}'.format(len(testset)))
@@ -194,8 +198,11 @@ if __name__ == '__main__':
         if rem_old_file:
             print("PRE-EXISTING LOGS: \t CLEARED")
         print(divider)
+
+        steps = math.ceil(len(trainset) / batchsize)
+        digits = math.ceil(len(str(steps)) / 2)
         fit(model=model, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=EPOCHS, model_name=model_name, divider=divider)
+            epochs=EPOCHS, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
         print("\n> All Epochs completed!")
     else:
         test(model=model, model_name=model_name, test_data_loader=test_loader, divider=divider, re_test=True)
