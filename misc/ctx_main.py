@@ -6,10 +6,10 @@ import random
 import warnings
 
 from imc_dataset import CTDataset
-from nabernet import NaberNet
+from imc_nabernet import NaberNet
 
 from imc_fit import *
-from plot import Plot
+from imc_plot_run import Plot
 
 ORG_PATH = '../data/covct/'
 CTX_PATH = '../data/CTX/'

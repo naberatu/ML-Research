@@ -6,10 +6,10 @@ import random
 import warnings
 
 from imc_dataset import CTDataset
-from nabernet import NaberNet
+from imc_nabernet import NaberNet
 
 from imc_fit import *
-from plot import *
+from imc_plot_run import *
 
 dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'
 dir_orig = 'C:/Users/elite/PycharmProjects/Pytorch/data/covct/'
