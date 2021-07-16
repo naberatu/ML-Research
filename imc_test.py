@@ -5,7 +5,7 @@ import os
 import random
 import warnings
 
-from misc.ctx_dataset import CTDataset
+from ctx_dataset import CTDataset
 from nabernet import NaberNet
 
 from fit_routine import *
@@ -154,14 +154,17 @@ optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 # =============================================================
 if __name__ == '__main__':
 
-    # STARTING MESSAGE - LETS US KNOW MODEL AND DATASET IN-USE.
-    print("\n==========================================")
-    print("SELECTED MODEL: \t", model_name)
-    print("SELECTED DATASET: \t", SET_NAME)
-    print("EXPECTED EPOCHS: \t", EPOCHS)
+    # Initialization information
+    divider = '===================================================='
+    print('\n' + divider)
+    print("MODEL:\t\t\t\t", model_name)
+    print("DATASET:\t\t\t", SET_NAME)
+    print("CLASSES:\t\t\t", CLASSES)
+    print("IMAGE BATCHES:\t\t", str(batchsize) + "x" + str(IMGSIZE) + "x" + str(IMGSIZE))
+    print("TOTAL IMAGES:\t\t", '{:,}'.format(len(trainset) + len(testset)))
+    print("EPOCHS:\t\t\t\t", str(EPOCHS))
 
-    # ENSURES THAT THE RIGHT LOG FILES ARE MADE & USED.
-    # NOTE to self, if you're gonna retest a model, erase its log first.
+    # Record log & figure directories
     TRAIN_PATH = "./logs/train_logger/__" + model_name + "__run___training.log"
     TEST_PATH = "./logs/test_logger/__" + model_name + "__run___test.log"
     TEST2_PATH = "./logs/test_logger/--" + model_name + "__split___test.log"
@@ -184,12 +187,13 @@ if __name__ == '__main__':
 
         if rem_old_file:
             print("PRE-EXISTING LOGS: \t CLEARED")
-        print("==========================================")
-        fit(model, train_loader, test_loader, optimizer, epochs=EPOCHS, model_name=model_name)
+        print(divider)
+        fit(model=model, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
+            epochs=EPOCHS, model_name=model_name, divider=divider)
         print("\n> All Epochs completed!")
     else:
-        test(model=model, model_name=model_name, test_data_loader=test_loader, re_test=True)
-        print("==========================================")
+        test(model=model, model_name=model_name, test_data_loader=test_loader, divider=divider, re_test=True)
+        print(divider)
         print("\n> All Epochs completed!")
 
     print("\n> Generating Plots...")
