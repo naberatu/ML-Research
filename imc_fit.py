@@ -9,7 +9,7 @@ import pathlib
 import logging
 
 # Setup device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda')
 
 
 def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.nn.CrossEntropyLoss(),

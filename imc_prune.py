@@ -7,10 +7,13 @@ from torch.nn import modules
 from torchvision.models.resnet import BasicBlock
 
 warnings.filterwarnings("ignore")
+device = torch.device('cuda')
 
 
 def prune_model(name='', model=None, dir_models='', suffix='', im_size=224):
     print('\nPruning Model: ' + name + '...', end='\t')
+
+    model.to(device)
 
     strategy = tp.strategy.L1Strategy()
     DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1, 3, im_size, im_size))
