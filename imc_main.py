@@ -1,4 +1,5 @@
 # Environment imports
+import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms as transforms
 import torch.optim as optim
@@ -189,7 +190,9 @@ if __name__ == '__main__':
     TEST2_PATH = "./logs/test_logger/--" + model_name + "__split___test.log"
     PLOT_PATH = "./figures/" + model_name + "_plot.png"
 
-    acc_original = -1.0
+    steps = math.ceil(len(trainset) / batchsize)
+    digits = math.floor(len(str(steps)) / 2)
+    acc_original = 0.0
 
     if not only_test:
         rem_old_file = False
@@ -210,8 +213,6 @@ if __name__ == '__main__':
             print("PRE-EXISTING LOGS: \t CLEARED")
         print(divider)
 
-        steps = math.ceil(len(trainset) / batchsize)
-        digits = math.floor(len(str(steps)) / 2)
         fit(model=model, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
             epochs=EPOCHS, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
         print("\n> All Epochs completed!")
@@ -226,7 +227,7 @@ if __name__ == '__main__':
         print("> Plot Closed.")
 
     if prune:
-        if acc_original < 0:
+        if not only_test:
             # EVAL Original Model
             # =============================================================
             acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader,
@@ -238,15 +239,24 @@ if __name__ == '__main__':
         # =============================================================
         tag = '_pruned'
         model_pruned = prune_model(model=model, name=model_name, dir_models=dir_models, suffix=tag)
+        model_name += tag
 
         # EVAL Pruned Model
         # =============================================================
-        acc_pruned = test(model=model_pruned, model_name=model_name + tag, test_data_loader=test_loader,
+        epochs = math.ceil(EPOCHS * 0.1)
+        fit(model=model_pruned, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
+            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
+        model_pruned = torch.load(dir_models + model_name + ".pth")
+        acc_pruned = test(model=model_pruned, model_name=model_name, test_data_loader=test_loader,
                           divider=divider, re_test=True)
 
         print(divider)
-        print('Origin Model Accuracy:\t', '{:.2f}%'.format(acc_original))
-        print('Pruned Model Accuracy:\t', '{:.2f}%'.format(acc_pruned))
+        acc1 = '{:.1f}%'.format(acc_original)
+        acc2 = '{:.1f}%'.format(acc_pruned)
+        print('Origin Model Accuracy:\t', '{:>6}'.format(acc1))
+        print('Pruned Model Accuracy:\t', '{:>6}'.format(acc2))
         result = (acc_pruned - acc_original) / acc_original
-        print('Accuracy Changed By\t\t ', '{:.2f}%'.format(result * -100), '(DROP)' if result < 0 else '(RISE)')
+        diff = '{:.2f}%'.format(abs(result) * 100)
+        state_str = 'dropped' if result < 0 else 'rose'
+        print('Accuracy ' + state_str + ' by:\t\t', '{:>6}'.format(diff))
         print(divider)
