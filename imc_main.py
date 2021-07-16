@@ -25,7 +25,7 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_bn"
+model_name = "resnet18_an"
 model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
@@ -33,20 +33,20 @@ model = resnet18(pretrained=False)
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-# only_test = True
-only_test = False
+only_test = True
+# only_test = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
-model_loaded = False
-# model_loaded = True
-# model = torch.load(dir_models + model_name + ".pth")
+model_loaded = only_test
+if model_loaded:
+    model = torch.load(dir_models + model_name + ".pth")
 
 # =============================================================
 # SELECT: Dataset Name
 # =============================================================
-# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
-SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
+SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+# SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
 # SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 
 if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower():
@@ -63,8 +63,8 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 # =============================================================
 if "UCSD" in SET_NAME:
     CLASSES = ['UCSD_NC', 'UCSD_CO']
-    IMGSIZE = 224
-    EPOCHS = 10
+    IMGSIZE = 512
+    EPOCHS = 12
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
 elif "SARS" in SET_NAME:
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
