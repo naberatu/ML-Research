@@ -25,7 +25,7 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_an"
+model_name = "resnet18_cn"
 model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
@@ -33,8 +33,8 @@ model = resnet18(pretrained=False)
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-only_test = True
-# only_test = False
+# only_test = True
+only_test = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
@@ -45,9 +45,9 @@ if model_loaded:
 # =============================================================
 # SELECT: Dataset Name
 # =============================================================
-SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
 # SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
-# SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
+SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 
 if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower():
     model = NaberNet(1 if 'sars' in SET_NAME.lower() else 2)
@@ -73,7 +73,7 @@ elif "SARS" in SET_NAME:
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 elif "COVIDx" in SET_NAME:
     CLASSES = ['CTX_NC', 'CTX_CO']
-    IMGSIZE = 424
+    IMGSIZE = 400
     EPOCHS = 20
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 
@@ -81,7 +81,7 @@ elif "COVIDx" in SET_NAME:
 # STEP: Setup Dataset Transforms
 # =============================================================
 train_transformer = transforms.Compose([
-    transforms.Resize(256),
+    transforms.Resize(IMGSIZE),
     transforms.RandomResizedCrop(IMGSIZE, scale=(0.5, 1.0)),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
