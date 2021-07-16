@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 # Directories
-dir_models = '.\\models\\'
+dir_models = 'seg_models\\'
 dir_metrics = '.\\metrics\\'
 
 

@@ -6,7 +6,11 @@ Image Size:			 300x300
 Num Images:			 746
 Num Epochs:			 10
 =================================================================
-NaberNet_ucsd Accuracy:	 49.1%
+NaberNet_ucsd Initial Accuracy:		 54.5%
 =================================================================
-NaberNet_ucsd_pruned Accuracy:	 49.1%
+NaberNet_ucsd Pruned Accuracy:		 54.5%
+=================================================================
+NaberNet_ucsd Pruned TFL Accuracy:	 45.5%
+=================================================================
+NaberNet_ucsd Quant. TFL Accuracy:	 45.5%
 =================================================================

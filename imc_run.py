@@ -28,6 +28,7 @@ from tensorflow.keras.utils import to_categorical
 
 # Models
 from imc_nabernet import nabernet
+from imc_compress import eval_imc
 from imc_compress import eval_imc_tfl
 
 # Metrics
@@ -42,7 +43,7 @@ K.set_session(tf_v1.Session(config=config))
 # ===================================================
 # STEP: Model Parameters
 # ===================================================
-dir_models = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\models\\"
+dir_models = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\imc_models\\"
 dir_metrics = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\metrics\\"
 dir_data = "C:\\Users\\elite\\PycharmProjects\\Pytorch\\data\\"
 divider = "================================================================="
@@ -62,8 +63,6 @@ OPTIMIZER = tf.keras.optimizers.SGD(learning_rate=0.0005)
 # LOSS = 'categorical_crossentropy'
 LOSS = 'binary_crossentropy'
 VERBOSITY = 2
-SHUFFLE = True
-# SHUFFLE = False
 suffix = ""
 
 # Automatic dataset parameter assignment
@@ -108,8 +107,8 @@ x = np.array(x).astype('uint8')
 y = np.array(y).astype('uint8')
 NUM_IMGS = len(x)
 
-x_train, x_temp, y_train, y_temp = train_test_split(x, y, test_size=0.3, shuffle=SHUFFLE)
-x_val, x_test, y_val, y_test = train_test_split(x_temp, y_temp, test_size=0.5, shuffle=SHUFFLE)
+x_train, x_temp, y_train, y_temp = train_test_split(x, y, test_size=0.3, shuffle=False)
+x_val, x_test, y_val, y_test = train_test_split(x_temp, y_temp, test_size=0.5, shuffle=False)
 
 # ===================================================
 # STEP: Compile, Fit, and Save Model
@@ -125,50 +124,33 @@ text = [
     divider
 ]
 
-for i, line in enumerate(text):
-    if i == 0:
-        print()
-    print(line)
+eval_file = dir_metrics + "imc_" + MODEL_NAME + ".txt"
+with open(eval_file, 'w') as f:
+    for line in text:
+        print(line)
+    f.write('\n'.join(text))
+f.close()
 
 file = dir_models + MODEL_NAME + ".hdf5"
 
-# MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
-# MODEL.fit(x=x_train, y=y_train, verbose=VERBOSITY, epochs=EPOCHS, validation_data=(x_val, y_val), shuffle=SHUFFLE)
-# MODEL.save(file)
-# print("\nSaved Model to:\t\t", file)
+# NOTE: Comment while evaluating, uncomment to train.
+MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
+MODEL.fit(x=x_train, y=y_train, verbose=VERBOSITY, epochs=EPOCHS, validation_data=(x_val, y_val), shuffle=True)
+MODEL.save(file)
+print("\nSaved Model to:\t\t", file)
 
 # ===================================================
 # EVAL: Image Classifier
 # ===================================================
 MODEL.load_weights(file)
 MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
-
-
-def eval_imc(M_NAME='', suffix='', mode='w', MODEL=None, x=None, y=None):
-    print("Evaluating:\t", M_NAME + suffix + "...", end='\t')
-
-    _, accuracy = MODEL.evaluate(x, y)
-    text.append(M_NAME + suffix + " Accuracy:\t " + "%.1f" % (accuracy * 100) + "%")
-    text.append(divider + "\n")
-
-    # Write results to file.
-    filename = "imc_" + M_NAME + ".txt"
-
-    with open(dir_metrics + filename, mode) as f:
-        f.write('\n'.join(text))
-    f.close()
-
-    text.clear()
-    print("COMPLETE")
-
-
-eval_imc(M_NAME=MODEL_NAME, mode='w', MODEL=MODEL, x=x_test, y=y_test)
+eval_imc(name=MODEL_NAME, suffix=' Initial', eval_file=eval_file, divider=divider, model=MODEL, x=x_test, y=y_test)
 
 # =============================================================
 # STEP: Begin Pruning UNet
 # =============================================================
 MODEL.load_weights(file)
-MODEL.compile(optimizer=OPTIMIZER, loss='binary_crossentropy', metrics=['accuracy'])
+MODEL.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
 
 with open('metrics/imc_summary_' + MODEL_NAME + '.txt', 'w') as f:
     MODEL.summary(print_fn=lambda x: f.write(x + '\n'))
@@ -203,16 +185,16 @@ model_for_pruning.compile(optimizer=OPTIMIZER,
 # =============================================================
 model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
 model_for_export.save(dir_models + MODEL_NAME + "_pruned.hdf5")
+
 with open('metrics/un_summary_pruned.txt', 'w') as f:
     model_for_export.summary(print_fn=lambda x: f.write(x + '\n'))
 f.close()
-print('SAVED:\t\t Pruned Keras Model')
+print('Saved:\t\t Pruned Keras Model')
 
 # EVAL: Re-Loaded Pruned Model (hdf5)
 pruned_model = tf.keras.models.load_model(dir_models + MODEL_NAME + "_pruned.hdf5")
 pruned_model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=['accuracy'])
-eval_imc(MODEL_NAME, suffix="_pruned", mode='a', MODEL=pruned_model, x=x_test, y=y_test)
-print('EVALUATED:\t Pruned Keras Model')
+eval_imc(MODEL_NAME, suffix=" Pruned", eval_file=eval_file, divider=divider, model=pruned_model, x=x_test, y=y_test)
 
 # =============================================================
 # STEP: Convert Pruned Model to TFlite
@@ -226,15 +208,16 @@ filename = dir_models + MODEL_NAME + '_pruned.tflite'
 with open(filename, 'wb') as f:
     f.write(pruned_tflite_model)
 f.close()
-print('SAVED:\t\t Pruned TFLite Model')
+print('Saved:\t\t Pruned TFLite Model')
 
 # EVAL: Pruned TFLite File
-eval_imc_tfl(MODEL_NAME, "_pruned", 'a', dir_metrics, divider, pruned_tflite_model, x_test, y_test)
-print("EVALUATED:\t Pruned TFLite Model")
+eval_imc_tfl(name=MODEL_NAME, suffix=" Pruned", eval_file=eval_file, divider=divider,
+             model=pruned_tflite_model, test_images=x_test, test_labels=y_test)
 
 # =============================================================
 # STEP: Quantize Pruned File
 # =============================================================
+print(divider)
 print("Quantizing Pruned Model...")
 converter = lite.TFLiteConverter.from_keras_model(pruned_model)
 converter.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -244,10 +227,12 @@ filename = dir_models + MODEL_NAME + '_pq.tflite'
 with open(filename, 'wb') as f:
     f.write(prune_quant_tfl_model)
 f.close()
-print("SAVED:\t\t Pruned & Quantized TFLite Model")
+print("Saved:\t\t Pruned & Quantized TFLite Model")
 
 # EVAL: Pruned and Quantized File
-eval_imc_tfl(MODEL_NAME, "_Quantized", 'a', dir_metrics, divider, prune_quant_tfl_model, x_test, y_test)
-print("EVALUATED:\t Pruned & Quantized TFLite Model")
+eval_imc_tfl(name=MODEL_NAME, suffix=" Quant.", eval_file=eval_file, divider=divider,
+             model=prune_quant_tfl_model, test_images=x_test, test_labels=y_test)
 
-
+print(divider)
+print("All steps complete! Results saved to:", eval_file)
+print(divider)

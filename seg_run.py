@@ -52,7 +52,7 @@ from sklearn.utils import class_weight
 # Directories
 dir_medseg = './data/MedSeg/'
 dir_sandstone = 'C:/Users/elite/Desktop/sandstone_data_for_ML/full_labels_for_deep_learning/128_patches/'
-dir_models = './models/'
+dir_models = 'seg_models/'
 dir_metrics = './metrics/'
 
 
