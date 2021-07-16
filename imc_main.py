@@ -11,6 +11,7 @@ import math
 from imc_fit import *
 from imc_plot_run import *
 from imc_dataset import CTDataset
+from imc_prune import prune_model
 
 # Imported models
 from imc_nabernet import NaberNet
@@ -18,6 +19,7 @@ from torchvision.models import resnet18
 from torchvision.models import resnet50
 from torchvision.models import vgg16
 
+# Directories
 dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/'
 # dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'
 dir_orig = 'C:/Users/elite/PycharmProjects/Pytorch/data/covct/'
@@ -29,7 +31,7 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_cn"
+model_name = "resnet18_bn"
 model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
@@ -37,8 +39,12 @@ model = resnet18(pretrained=False)
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-# only_test = True
-only_test = False
+only_test = True
+# only_test = False
+# graph = True
+graph = False
+prune = True
+# prune = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
@@ -49,9 +55,12 @@ if model_loaded:
 # =============================================================
 # SELECT: Dataset Name
 # =============================================================
-# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
-# SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
-SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
+if '_a' in model_name:
+    SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+elif '_b' in model_name:
+    SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
+elif '_c' in model_name:
+    SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 
 if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower():
     model = NaberNet(1 if 'sars' in SET_NAME.lower() else 2)
@@ -65,17 +74,17 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 # =============================================================
 # STEP: Generate Dataset Parameters
 # =============================================================
-if "UCSD" in SET_NAME:
+if "ucsd" in SET_NAME.lower():
     CLASSES = ['UCSD_NC', 'UCSD_CO']
     IMGSIZE = 512
     EPOCHS = 12
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
-elif "SARS" in SET_NAME:
+elif "sars" in SET_NAME.lower():
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
     IMGSIZE = 224
     EPOCHS = 20
     normalize = transforms.Normalize(mean=0.611, std=0.273)
-elif "COVIDx" in SET_NAME:
+elif "covidx" in SET_NAME.lower():
     CLASSES = ['CTX_NC', 'CTX_CO']
     IMGSIZE = 400
     EPOCHS = 20
@@ -180,6 +189,8 @@ if __name__ == '__main__':
     TEST2_PATH = "./logs/test_logger/--" + model_name + "__split___test.log"
     PLOT_PATH = "./figures/" + model_name + "_plot.png"
 
+    acc_original = -1.0
+
     if not only_test:
         rem_old_file = False
         if os.path.exists(TRAIN_PATH):
@@ -205,10 +216,37 @@ if __name__ == '__main__':
             epochs=EPOCHS, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
         print("\n> All Epochs completed!")
     else:
-        test(model=model, model_name=model_name, test_data_loader=test_loader, divider=divider, re_test=True)
+        acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader, divider=divider, re_test=True)
         print(divider)
         print("\n> All Epochs completed!")
 
-    print("\n> Generating Plots...")
-    Plot(model_name).plot(only_test=only_test)
-    print("> Plot Closed.")
+    if graph:
+        print("\n> Generating Plots...")
+        Plot(model_name).plot(only_test=only_test)
+        print("> Plot Closed.")
+
+    if prune:
+        if acc_original < 0:
+            # EVAL Original Model
+            # =============================================================
+            acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader,
+                                divider=divider, re_test=True)
+            print(divider)
+            print("\n> All Epochs completed!")
+
+        # STEP Prune Model
+        # =============================================================
+        tag = '_pruned'
+        model_pruned = prune_model(model=model, name=model_name, dir_models=dir_models, suffix=tag)
+
+        # EVAL Pruned Model
+        # =============================================================
+        acc_pruned = test(model=model_pruned, model_name=model_name + tag, test_data_loader=test_loader,
+                          divider=divider, re_test=True)
+
+        print(divider)
+        print('Origin Model Accuracy:\t', '{:.2f}%'.format(acc_original))
+        print('Pruned Model Accuracy:\t', '{:.2f}%'.format(acc_pruned))
+        result = (acc_pruned - acc_original) / acc_original
+        print('Accuracy Changed By\t\t ', '{:.2f}%'.format(result * -100), '(DROP)' if result < 0 else '(RISE)')
+        print(divider)
