@@ -32,7 +32,7 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_bn"
+model_name = "resnet18_an"
 model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
@@ -258,5 +258,6 @@ if __name__ == '__main__':
         result = (acc_pruned - acc_original) / acc_original
         diff = '{:.2f}%'.format(abs(result) * 100)
         state_str = 'dropped' if result < 0 else 'rose'
-        print('Accuracy ' + state_str + ' by:\t\t', '{:>6}'.format(diff))
+        gap = '\t\t' if abs(result) * 100 < 10.0 else '\t'
+        print('Accuracy ' + state_str + ' by:' + gap, '{:>6}'.format(diff))
         print(divider)
