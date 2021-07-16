@@ -1,4 +1,4 @@
-#
+
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -10,9 +10,9 @@ import torch.nn.functional as F
 
 cdims = [32, 48, 64, 64, 64]     # Was used for nabernet_c1
 # cdims = [30, 45, 60, 75, 90]     # Was used for nabernet_c2
-# fdims = [128, 84, 2]            # Was used for nabernet_c1
-fdims = [100, 64, 3]             # Was used for nabernet_c2
-IMF = [51, 51, 101]
+fdims = [128, 84, 2]            # Was used for nabernet_c1
+# fdims = [100, 64, 3]             # Was used for nabernet_c2
+IMF = [59, 59, 59]
 # =============================================================
 
 

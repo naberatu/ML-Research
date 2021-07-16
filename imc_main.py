@@ -32,18 +32,18 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_an"
-model = resnet18(pretrained=False)
+# model_name = "resnet18_an"
+# model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
-# model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
-# model = NaberNet(0)
+model_name = "nabernet_an"       # B2 is the best, with 40 epochs.
+model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-only_test = True
-# only_test = False
-# graph = True
-graph = False
+# only_test = True
+only_test = False
+graph = True
+# graph = False
 prune = True
 # prune = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
@@ -77,17 +77,17 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 # =============================================================
 if "ucsd" in SET_NAME.lower():
     CLASSES = ['UCSD_NC', 'UCSD_CO']
-    IMGSIZE = 512
+    IMGSIZE = 256
     EPOCHS = 12
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
 elif "sars" in SET_NAME.lower():
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
-    IMGSIZE = 224
+    IMGSIZE = 256
     EPOCHS = 20
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 elif "covidx" in SET_NAME.lower():
     CLASSES = ['CTX_NC', 'CTX_CO']
-    IMGSIZE = 400
+    IMGSIZE = 256
     EPOCHS = 20
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 
@@ -238,7 +238,7 @@ if __name__ == '__main__':
         # STEP Prune Model
         # =============================================================
         tag = '_pruned'
-        model_pruned = prune_model(model=model, name=model_name, dir_models=dir_models, suffix=tag)
+        model_pruned = prune_model(model=model, name=model_name, dir_models=dir_models, suffix=tag, im_size=IMGSIZE)
         model_name += tag
 
         # EVAL Pruned Model
