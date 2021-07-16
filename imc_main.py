@@ -40,10 +40,10 @@ model_name = "nabernet_an"       # B2 is the best, with 40 epochs.
 model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-# only_test = True
-only_test = False
-graph = True
-# graph = False
+only_test = True
+# only_test = False
+# graph = True
+graph = False
 prune = True
 # prune = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
@@ -68,7 +68,8 @@ if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower()
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.005
+learning_rate = 0.001
+# learning_rate = 0.005
 # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -78,7 +79,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 if "ucsd" in SET_NAME.lower():
     CLASSES = ['UCSD_NC', 'UCSD_CO']
     IMGSIZE = 256
-    EPOCHS = 12
+    EPOCHS = 10
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
 elif "sars" in SET_NAME.lower():
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']

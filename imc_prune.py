@@ -23,9 +23,19 @@ def prune_model(name='', model=None, dir_models='', suffix='', im_size=224):
     block_prune_probs = [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3]
     limit = len(block_prune_probs) - 1
     blk_id = 0
+    conv_index = 0
+    prev_conv = False
     for m in list(model.modules())[1:]:
         if isinstance(m, modules.Conv2d):
+            prev_conv = True
+            conv_index += 1
+        if isinstance(m, modules.Linear) and prev_conv:
+            break
+
+    for m in list(model.modules())[1:]:
+        if isinstance(m, modules.Conv2d) and (conv_index > 1 or 'naber' not in name.lower()):
             prune_conv(m)
+            conv_index -= 1
         elif isinstance(m, BasicBlock):
             prune_conv(m.conv1, block_prune_probs[blk_id])
             prune_conv(m.conv2, block_prune_probs[blk_id])
