@@ -17,7 +17,7 @@ logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 # Tensorflow imports
 from tensorflow.python.keras import backend as K
-from imc_dataset import image_dataset_from_directory
+from keras_dataset import image_dataset_from_directory
 import tensorflow as tf
 from tensorflow import lite
 import tensorflow_model_optimization as tfmot
@@ -27,10 +27,10 @@ from tensorflow.keras.utils import to_categorical
 
 
 # Models
-from imc_nabernet import nabernet
+from keras_nabernet import nabernet
 from imc_resnet18 import build_ResNet
-from imc_compress import eval_imc
-from imc_compress import eval_imc_tfl
+from keras_eval import eval_imc
+from keras_eval import eval_imc_tfl
 
 # Metrics
 import sklearn.metrics as metrics

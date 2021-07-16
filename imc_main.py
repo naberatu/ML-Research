@@ -5,10 +5,10 @@ import os
 import random
 import warnings
 
-from ctx_dataset import CTDataset
+from imc_dataset import CTDataset
 from nabernet import NaberNet
 
-from fit_routine import *
+from imc_fit import *
 from plot import *
 
 dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'

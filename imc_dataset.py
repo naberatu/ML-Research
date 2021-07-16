@@ -1,136 +1,148 @@
 
+import os
+from torch.utils.data import Dataset, DataLoader
+import torch
+import torch.nn as nn
+
+from PIL import Image
+import matplotlib.pyplot as plt
 import numpy as np
-from tensorflow_core.python.keras.layers import image_preprocessing
-import dataset_utils
-from tensorflow.python.data.ops import dataset_ops
-from tensorflow.python.keras.preprocessing import image as keras_image_ops
-from tensorflow.python.ops import image_ops
-from tensorflow.python.ops import io_ops
 
-ALLOWLIST_FORMATS = ('.bmp', '.gif', '.jpeg', '.jpg', '.png')
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve, confusion_matrix
 
 
-def image_dataset_from_directory(directory,
-                                 labels='inferred',
-                                 label_mode='int',
-                                 class_names=None,
-                                 color_mode='rgb',
-                                 batch_size=32,
-                                 image_size=(256, 256),
-                                 shuffle=True,
-                                 seed=None,
-                                 validation_split=None,
-                                 subset=None,
-                                 interpolation='bilinear',
-                                 follow_links=False,
-                                 smart_resize=False):
-
-  if labels not in ('inferred', None):
-    if not isinstance(labels, (list, tuple)):
-      raise ValueError(
-          '`labels` argument should be a list/tuple of integer labels, of '
-          'the same size as the number of image files in the target '
-          'directory. If you wish to infer the labels from the subdirectory '
-          'names in the target directory, pass `labels="inferred"`. '
-          'If you wish to get a dataset that only contains images '
-          '(no labels), pass `label_mode=None`.')
-    if class_names:
-      raise ValueError('You can only pass `class_names` if the labels are '
-                       'inferred from the subdirectory names in the target '
-                       'directory (`labels="inferred"`).')
-  if label_mode not in {'int', 'categorical', 'binary', None}:
-    raise ValueError(
-        '`label_mode` argument must be one of "int", "categorical", "binary", '
-        'or None. Received: %s' % (label_mode,))
-  if labels is None or label_mode is None:
-    labels = None
-    label_mode = None
-  if color_mode == 'rgb':
-    num_channels = 3
-  elif color_mode == 'rgba':
-    num_channels = 4
-  elif color_mode == 'grayscale':
-    num_channels = 1
-  else:
-    raise ValueError(
-        '`color_mode` must be one of {"rbg", "rgba", "grayscale"}. '
-        'Received: %s' % (color_mode,))
-  interpolation = image_preprocessing.get_interpolation(interpolation)
-  dataset_utils.check_validation_split_arg(
-      validation_split, subset, shuffle, seed)
-
-  if seed is None:
-    seed = np.random.randint(1e6)
-  image_paths, labels, class_names = dataset_utils.index_directory(
-      directory,
-      labels,
-      formats=ALLOWLIST_FORMATS,
-      class_names=class_names,
-      shuffle=shuffle,
-      seed=seed,
-      follow_links=follow_links)
-
-  if label_mode == 'binary' and len(class_names) != 2:
-    raise ValueError(
-        'When passing `label_mode="binary", there must exactly 2 classes. '
-        'Found the following classes: %s' % (class_names,))
-
-  image_paths, labels = dataset_utils.get_training_or_validation_split(
-      image_paths, labels, validation_split, subset)
-  if not image_paths:
-    raise ValueError('No images found.')
-
-  LENGTH = len(image_paths)
-  dataset = paths_and_labels_to_dataset(
-      image_paths=image_paths,
-      image_size=image_size,
-      num_channels=num_channels,
-      labels=labels,
-      label_mode=label_mode,
-      num_classes=len(class_names),
-      interpolation=interpolation,
-      smart_resize=smart_resize)
-  if shuffle:
-    # Shuffle locally at each iteration
-    dataset = dataset.shuffle(buffer_size=batch_size * 8, seed=seed)
-  dataset = dataset.batch(batch_size)
-  # Users may need to reference `class_names`.
-  dataset.class_names = class_names
-  # Include file paths for images as attribute.
-  dataset.file_paths = image_paths
-  return dataset
+# HELPER FUNCTION
+def read_txt(txt_path):
+    with open(txt_path) as f:
+        lines = f.readlines()
+    txt_data = [line.strip() for line in lines]
+    return txt_data
 
 
-def paths_and_labels_to_dataset(image_paths,
-                                image_size,
-                                num_channels,
-                                labels,
-                                label_mode,
-                                num_classes,
-                                interpolation,
-                                smart_resize=False):
-  """Constructs a dataset of images and labels."""
-  # TODO(fchollet): consider making num_parallel_calls settable
-  path_ds = dataset_ops.Dataset.from_tensor_slices(image_paths)
-  args = (image_size, num_channels, interpolation, smart_resize)
-  img_ds = path_ds.map(
-      lambda x: load_image(x, *args))
-  if label_mode:
-    label_ds = dataset_utils.labels_to_dataset(labels, label_mode, num_classes)
-    img_ds = dataset_ops.Dataset.zip((img_ds, label_ds))
-  return img_ds
+# =============================================================
+# NOTE DATASET CLASS
+# =============================================================
+class CTDataset(Dataset):
+    def __init__(self, root_dir, classes="", covid_files="", non_covid_files="", transform=None, is_ctx=False):
+        self.root_dir = root_dir
+        self.classes = classes
+        self.files_path = [non_covid_files, covid_files]
+        self.image_list = []
+        self.transform = transform
+
+        # read the files from data split text files
+        covid_files = read_txt(covid_files)
+        non_covid_files = read_txt(non_covid_files)
+
+        for cls_index in range(len(self.classes)):
+            if is_ctx:
+                class_files = [[os.path.join(self.root_dir, x), cls_index] for x in read_txt(self.files_path[cls_index])]
+            else:
+                class_files = [[os.path.join(self.root_dir, self.classes[cls_index], x), cls_index] for x in read_txt(
+                    self.files_path[cls_index])]
+            self.image_list += class_files
+
+    def __len__(self):
+        return len(self.image_list)
+
+    def __getitem__(self, idx):
+        path = self.image_list[idx][0]
+
+        # Read the image
+        image = Image.open(path).convert('RGB')     # For jpeg images
+
+        # Apply transforms
+        if self.transform:
+            image = self.transform(image)
+
+        label = int(self.image_list[idx][1])
+
+        data = {'img': image,
+                'label': label}
+                # 'paths': path}      # NOTE: Comment this line & compute_metrics out for fit_routine
+
+        return data
 
 
-def load_image(path, image_size, num_channels, interpolation,
-               smart_resize=False):
-  """Load an image from a path and resize it."""
-  img = io_ops.read_file(path)
-  img = image_ops.decode_image(
-      img, channels=num_channels, expand_animations=False)
-  if smart_resize:
-    img = keras_image_ops.smart_resize(img, image_size,
-                                       interpolation=interpolation)
-  else:
-    img = image_ops.resize_images_v2(img, image_size, method=interpolation)
-  img.set_shape((image_size[0], image_size[1], num_channels))
-  return img
+# =============================================================
+# Former Metrics Method (For Old_Main)
+# =============================================================
+# def compute_metrics(model, test_loader, device, plot_roc_curve=False):
+#     model.eval()
+#
+#     val_loss = 0
+#     val_correct = 0
+#
+#     criterion = nn.CrossEntropyLoss()
+#
+#     score_list = torch.Tensor([]).to(device)
+#     pred_list = torch.Tensor([]).to(device).long()
+#     target_list = torch.Tensor([]).to(device).long()
+#     path_list = []
+#
+#     for iter_num, data in enumerate(test_loader):
+#         # Convert image data into single channel data
+#         image, target = data['img'].to(device), data['label'].to(device)
+#         paths = data['paths']
+#         path_list.extend(paths)
+#
+#         # Compute the loss
+#         with torch.no_grad():
+#             output = model(image)
+#
+#         # Log loss
+#         val_loss += criterion(output, target.long()).item()
+#
+#         # Calculate the number of correctly classified examples
+#         pred = output.argmax(dim=1, keepdim=True)
+#         val_correct += pred.eq(target.long().view_as(pred)).sum().item()
+#
+#         # Bookkeeping
+#         # score_list = torch.cat([score_list, nn.Softmax(dim=1)(output)[:, 1].squeeze()])
+#         score_list = torch.cat([score_list, nn.Softmax(dim=1)(output)[:, 0].squeeze()])
+#         pred_list = torch.cat([pred_list, pred.squeeze()])
+#         target_list = torch.cat([target_list, target.squeeze()])
+#
+#     classification_metrics = classification_report(target_list.tolist(), pred_list.tolist(),
+#                                                    target_names=['CT_NonCOVID', 'CT_COVID'],
+#                                                    # target_names=['CT_COVID'],
+#                                                    output_dict=True)
+#
+#     # sensitivity is the recall of the positive class
+#     sensitivity = classification_metrics['CT_COVID']['recall']
+#
+#     # specificity is the recall of the negative class
+#     specificity = classification_metrics['CT_NonCOVID']['recall']
+#
+#     # accuracy
+#     accuracy = classification_metrics['accuracy']
+#
+#     # confusion matrix
+#     conf_matrix = confusion_matrix(target_list.tolist(), pred_list.tolist())
+#
+#     # roc score
+#     roc_score = roc_auc_score(target_list.tolist(), score_list.tolist())
+#
+#     # plot the roc curve
+#     if plot_roc_curve:
+#         fpr, tpr, _ = roc_curve(target_list.tolist(), score_list.tolist())
+#         plt.plot(fpr, tpr, label="Area under ROC = {:.4f}".format(roc_score))
+#         plt.legend(loc='best')
+#         plt.xlabel('False Positive Rate')
+#         plt.ylabel('True Positive Rate')
+#         plt.show()
+#
+#     # put together values
+#     metrics_dict = {
+#                     "Accuracy": accuracy,
+#                     "Sensitivity": sensitivity,
+#                     "Specificity": specificity,
+#                     "Roc_score": roc_score,
+#                     "Confusion Matrix": conf_matrix,
+#                     "Validation Loss": val_loss / len(test_loader),
+#                     "score_list": score_list.tolist(),
+#                     "pred_list": pred_list.tolist(),
+#                     "target_list": target_list.tolist(),
+#                     "paths": path_list}
+#
+#     return metrics_dict
