@@ -24,16 +24,14 @@ def prune_model(name='', model=None, dir_models='', suffix='', im_size=224):
     limit = len(block_prune_probs) - 1
     blk_id = 0
     for m in list(model.modules())[1:]:
-        if isinstance(m, BasicBlock):
+        if isinstance(m, modules.Conv2d):
+            prune_conv(m)
+        elif isinstance(m, BasicBlock):
             prune_conv(m.conv1, block_prune_probs[blk_id])
             prune_conv(m.conv2, block_prune_probs[blk_id])
             if blk_id < limit - 1:
                 blk_id += 1
 
-    # pruning_idxs = strategy(model.conv1.weight, amount=0.4)     # or manually selected pruning_idxs=[2, 6, 9, ...]
-    # pruning_plan = DG.get_pruning_plan(model.conv1, tp.prune_conv, idxs=pruning_idxs)
-
-    # pruning_plan.exec()
     print('COMPLETE')
 
     # 5. Save Model

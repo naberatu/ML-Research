@@ -243,9 +243,9 @@ if __name__ == '__main__':
 
         # EVAL Pruned Model
         # =============================================================
-        epochs = math.ceil(EPOCHS * 0.1)
+        # epochs = math.ceil(EPOCHS * 0.1)
         fit(model=model_pruned, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
+            epochs=2, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
         model_pruned = torch.load(dir_models + model_name + ".pth")
         acc_pruned = test(model=model_pruned, model_name=model_name, test_data_loader=test_loader,
                           divider=divider, re_test=True)
