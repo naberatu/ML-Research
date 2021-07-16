@@ -20,7 +20,7 @@ def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.
         acc_train = train(model=model, model_name=model_name, train_loader=train_loader, optimizer=optimizer,
                           epochs=epoch, criterion=criterion, print_freq=print_freq, divider=divider)
         acc_test = test(model=model, model_name=model_name, test_data_loader=test_loader,
-                        epoch=epoch, print_freq=print_freq, divider=divider)
+                        epoch=epoch, print_freq=print_freq, divider=divider, re_test=False)
 
         if acc_test > best_acc:
             if save_model:
@@ -116,7 +116,7 @@ def train(model=None, train_loader=None, optimizer=None, epochs=1, model_name=''
 def test(model=None, test_data_loader=None, model_name='', epoch=0, criterion=torch.nn.CrossEntropyLoss(),
          print_freq=10, divider='', re_test=False):
 
-    path = pathlib.Path('/logs/test_logger')
+    path = pathlib.Path('logs/test/')
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError:
@@ -127,10 +127,9 @@ def test(model=None, test_data_loader=None, model_name='', epoch=0, criterion=to
     print("> Validation for Epoch ", epoch + 1)
     print(divider)
 
+    file = str(path) + "__" + model_name + "__run___test.log"
     if re_test:
-        file = str(path) + "/__" + model_name+"_eval.log"
-    else:
-        file = str(path) + "/__" + model_name+"__run___test.log"
+        file = str(path) + "__" + model_name + "_eval.log"
 
     logger = logging.getLogger(name='test')
     logger.setLevel(logging.INFO)
@@ -260,7 +259,7 @@ def params_save(model, epoch, optimizer, train_accuracy_1, test_accuracy_1, mode
     path_params = str(pathlib.Path.cwd()) + '/' + 'imc_models'
     path_params = pathlib.Path(path_params)
     path_params.mkdir(parents=True, exist_ok=True)
-    file_params = str(path_params) + "/" + model_name + '_params' + '.pth.tar'
+    filename = str(path_params) + "/" + model_name + '_params' + '.pth.tar'
 
     torch.save({
         'epoch': epoch,
@@ -268,4 +267,4 @@ def params_save(model, epoch, optimizer, train_accuracy_1, test_accuracy_1, mode
         'optimizer_stat_dict': optimizer.state_dict(),
         'top1_accuracy_train': train_accuracy_1,
         'top1_accuracy_test': test_accuracy_1,
-    }, file_params)
+    }, filename)

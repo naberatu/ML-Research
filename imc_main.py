@@ -27,6 +27,7 @@ random.seed(12)
 # model = resnet50(pretrained=False)
 
 model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
+model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
 # only_test = True
@@ -45,6 +46,14 @@ model_loaded = False
 SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
 # SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 
+if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower():
+    model = NaberNet(1 if 'sars' in SET_NAME.lower() else 2)
+# =============================================================
+# SELECT: Optimizer and learning rate.
+# =============================================================
+learning_rate = 0.001
+optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+
 # =============================================================
 # STEP: Generate Dataset Prameters
 # =============================================================
@@ -53,22 +62,16 @@ if "UCSD" in SET_NAME:
     IMGSIZE = 224
     EPOCHS = 10
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
-    if "naber" in model_name and not model_loaded:
-        model = NaberNet(0)
-if "SARS" in SET_NAME:
+elif "SARS" in SET_NAME:
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
     IMGSIZE = 224
-    EPOCHS = 40
+    EPOCHS = 30
     normalize = transforms.Normalize(mean=0.611, std=0.273)
-    if "naber" in model_name and not model_loaded:
-        model = NaberNet(1)
 elif "COVIDx" in SET_NAME:
     CLASSES = ['CTX_NC', 'CTX_CO']
     IMGSIZE = 424
     EPOCHS = 20
     normalize = transforms.Normalize(mean=0.611, std=0.273)
-    if "naber" in model_name and not model_loaded:
-        model = NaberNet(2)
 
 # =============================================================
 # STEP: Setup Dataset Transforms
@@ -144,12 +147,6 @@ train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuff
 test_loader = DataLoader(testset, batch_size=batchsize, drop_last=False, shuffle=False, num_workers=1)
 
 # =============================================================
-# SETS UP LEARNING RATE AND OPTIMIZER FOR FINE TUNING
-# =============================================================
-learning_rate = 0.01
-optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
-
-# =============================================================
 # STEP: MAIN FUNCTION
 # =============================================================
 if __name__ == '__main__':
@@ -196,6 +193,6 @@ if __name__ == '__main__':
         print(divider)
         print("\n> All Epochs completed!")
 
-    print("\n> Generating Plots...")
-    Plot(model_name).plot(only_test=only_test)
-    print("> Plot Closed.")
+    # print("\n> Generating Plots...")
+    # Plot(model_name).plot(only_test=only_test)
+    # print("> Plot Closed.")
