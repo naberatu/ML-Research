@@ -36,7 +36,7 @@ random.seed(12)
 # model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
-model_name = "nabernet_an"       # B2 is the best, with 40 epochs.
+model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
 model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
