@@ -200,7 +200,7 @@ if __name__ == '__main__':
         print(divider)
 
         steps = math.ceil(len(trainset) / batchsize)
-        digits = math.ceil(len(str(steps)) / 2)
+        digits = math.floor(len(str(steps)) / 2)
         fit(model=model, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
             epochs=EPOCHS, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
         print("\n> All Epochs completed!")
