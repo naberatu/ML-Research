@@ -7,11 +7,15 @@ import warnings
 
 from imc_dataset import CTDataset
 from imc_nabernet import NaberNet
+from torchvision.models import resnet18
+from torchvision.models import resnet50
+from torchvision.models import vgg16
 
 from imc_fit import *
 from imc_plot_run import *
 
-dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'
+dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/'
+# dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'
 dir_orig = 'C:/Users/elite/PycharmProjects/Pytorch/data/covct/'
 dir_ctx = 'C:/Users/elite/PycharmProjects/Pytorch/data/ct_ctx/'
 
@@ -21,29 +25,29 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-# model_name = "resnet18_b2"
+model_name = "resnet18_an"
 # model = resnet18(pretrained=False)
 # model_name = "resnet50"
 # model = resnet50(pretrained=False)
 
-model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
-model = NaberNet(0)
+# model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
+# model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-# only_test = True
-only_test = False
+only_test = True
+# only_test = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
-model_loaded = False
-# model_loaded = True
-# model = torch.load(dir_models + model_name + ".tar")
+# model_loaded = False
+model_loaded = True
+model = torch.load(dir_models + model_name + ".pth")
 
 # =============================================================
 # SELECT: Dataset Name
 # =============================================================
-# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
-SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
+SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+# SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
 # SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 
 if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower():
@@ -51,11 +55,11 @@ if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower()
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.001
+learning_rate = 0.01
 optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
 # =============================================================
-# STEP: Generate Dataset Prameters
+# STEP: Generate Dataset Parameters
 # =============================================================
 if "UCSD" in SET_NAME:
     CLASSES = ['UCSD_NC', 'UCSD_CO']
@@ -139,8 +143,6 @@ elif "COVIDx" in SET_NAME:
                         is_ctx=True)
 
 # =============================================================
-
-# =============================================================
 # STEP: CREATE DATA-LOADERS
 # =============================================================
 train_loader = DataLoader(trainset, batch_size=batchsize, drop_last=False, shuffle=True, num_workers=1)
@@ -157,9 +159,12 @@ if __name__ == '__main__':
     print("MODEL:\t\t\t\t", model_name)
     print("DATASET:\t\t\t", SET_NAME)
     print("CLASSES:\t\t\t", CLASSES)
-    print("IMAGE BATCHES:\t\t", str(batchsize) + "x" + str(IMGSIZE) + "x" + str(IMGSIZE))
-    print("TOTAL IMAGES:\t\t", '{:,}'.format(len(trainset) + len(testset)))
-    print("EPOCHS:\t\t\t\t", str(EPOCHS))
+    if not only_test:
+        print("IMAGE BATCHES:\t\t", str(batchsize) + "x" + str(IMGSIZE) + "x" + str(IMGSIZE))
+        print("TOTAL IMAGES:\t\t", '{:,}'.format(len(trainset) + (len(valset) if valset is not None else 0) + len(testset)))
+        print("EPOCHS:\t\t\t\t", str(EPOCHS))
+    else:
+        print("TOTAL IMAGES:\t\t", '{:,}'.format(len(testset)))
 
     # Record log & figure directories
     TRAIN_PATH = "./logs/train_logger/__" + model_name + "__run___training.log"
@@ -193,6 +198,6 @@ if __name__ == '__main__':
         print(divider)
         print("\n> All Epochs completed!")
 
-    # print("\n> Generating Plots...")
-    # Plot(model_name).plot(only_test=only_test)
-    # print("> Plot Closed.")
+    print("\n> Generating Plots...")
+    Plot(model_name).plot(only_test=only_test)
+    print("> Plot Closed.")
