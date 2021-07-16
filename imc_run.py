@@ -28,6 +28,7 @@ from tensorflow.keras.utils import to_categorical
 
 # Models
 from imc_nabernet import nabernet
+from imc_resnet18 import build_ResNet
 from imc_compress import eval_imc
 from imc_compress import eval_imc_tfl
 
@@ -83,10 +84,17 @@ elif "x" in SET_NAME.lower():
 # SELECT: A Keras Model
 # =========================
 N_CLASSES = len(CLASSES)
+# NaberNet
 MODEL_NAME = "NaberNet_" + suffix
 MODEL = nabernet(n_classes=N_CLASSES, im_size=IM_SIZE)
+# Resnet-18
+# MODEL_NAME = "Resnet18_" + suffix
+# MODEL = build_ResNet('ResNet18', N_CLASSES)
+# MODEL.build(input_shape=IM_SIZE + (3,))
+# VGG-16
 # MODEL_NAME = "VGG16_" + suffix
 # MODEL = tf.keras.applications.vgg16.VGG16(include_top=False, weights=None, input_shape=IM_SIZE + (3,), classes=2, classifier_activation="sigmoid")
+# Resnet-50
 # MODEL_NAME = "Resnet50_" + suffix
 # MODEL = tf.keras.applications.resnet.ResNet50(include_top=False, weights=None, input_shape=IM_SIZE + (3,), classes=2)
 
