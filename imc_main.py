@@ -25,29 +25,28 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_an"
-# model = resnet18(pretrained=False)
-# model_name = "resnet50"
+model_name = "resnet18_bn"
+model = resnet18(pretrained=False)
+# model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
-
 # model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-only_test = True
-# only_test = False
+# only_test = True
+only_test = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
-# model_loaded = False
-model_loaded = True
-model = torch.load(dir_models + model_name + ".pth")
+model_loaded = False
+# model_loaded = True
+# model = torch.load(dir_models + model_name + ".pth")
 
 # =============================================================
 # SELECT: Dataset Name
 # =============================================================
-SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
-# SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
+# SET_NAME = "UCSD AI4H"              # Contains 746 images.        (Set A)
+SET_NAME = "SARS-COV-2 CT-SCAN"     # Contains 2,481 images.      (Set B)
 # SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 
 if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower():
@@ -55,8 +54,9 @@ if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower()
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.01
-optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+learning_rate = 0.005
+# optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # =============================================================
 # STEP: Generate Dataset Parameters
@@ -69,7 +69,7 @@ if "UCSD" in SET_NAME:
 elif "SARS" in SET_NAME:
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
     IMGSIZE = 224
-    EPOCHS = 30
+    EPOCHS = 20
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 elif "COVIDx" in SET_NAME:
     CLASSES = ['CTX_NC', 'CTX_CO']
@@ -161,7 +161,11 @@ if __name__ == '__main__':
     print("CLASSES:\t\t\t", CLASSES)
     if not only_test:
         print("IMAGE BATCHES:\t\t", str(batchsize) + "x" + str(IMGSIZE) + "x" + str(IMGSIZE))
-        print("TOTAL IMAGES:\t\t", '{:,}'.format(len(trainset) + (len(valset) if valset is not None else 0) + len(testset)))
+        valsize = 0
+        if 'valset' in locals():
+            valsize = len(valset)
+        trainsize, testsize = len(trainset), len(testset)
+        print("TOTAL IMAGES:\t\t", '{:,}'.format(trainsize + valsize + testsize))
         print("EPOCHS:\t\t\t\t", str(EPOCHS))
     else:
         print("TOTAL IMAGES:\t\t", '{:,}'.format(len(testset)))
