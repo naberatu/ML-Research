@@ -279,8 +279,8 @@ if __name__ == '__main__':
 
         # STEP Quantize Model
         # =============================================================
-        tag = '_quant'
-        model_quantized = quantize_model(model=model, name=model_name, dir_models=dir_models, suffix=tag, im_size=IMGSIZE)
+        tag = '_quantized'
+        model_quantized = quantize_model(model=model, name=model_name, dir_models=dir_models, suffix=tag)
         model_name += tag
 
         # EVAL Quantized Model
