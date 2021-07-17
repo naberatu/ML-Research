@@ -251,7 +251,7 @@ def model_save(model=None, model_name='', sub_folder=''):
     path_whole = str(pathlib.Path.cwd()) + sub_folder
     path_whole = pathlib.Path(path_whole)
     path_whole.mkdir(parents=True, exist_ok=True)
-    file_whole = str(path_whole) + model_name + '.pth'
+    file_whole = str(path_whole) + '\\' + model_name + '.pth'
 
     torch.save(model, file_whole)
 
@@ -260,7 +260,7 @@ def params_save(model=None, epoch=1, optimizer=None, train_accuracy_1=0.0, test_
     path_params = str(pathlib.Path.cwd()) + sub_folder
     path_params = pathlib.Path(path_params)
     path_params.mkdir(parents=True, exist_ok=True)
-    filename = str(path_params) + model_name + '_params' + '.pth.tar'
+    filename = str(path_params) + '\\' + model_name + '_params' + '.pth.tar'
 
     torch.save({
         'epoch': epoch,

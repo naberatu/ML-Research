@@ -26,7 +26,7 @@ dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/'
 dir_models_p = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/pruned/'
 dir_models_q = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/quantized/'
 dir_models_pq = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/pruned_quantized/'
-cut_dir = 'C:/Users/elite/PycharmProjects/Pytorch/'
+cut_dir = 'C:/Users/elite/PycharmProjects/Pytorch'
 dir_orig = 'C:/Users/elite/PycharmProjects/Pytorch/data/covct/'
 dir_ctx = 'C:/Users/elite/PycharmProjects/Pytorch/data/ct_ctx/'
 
@@ -52,8 +52,8 @@ only_test = True
 graph = False
 prune = True
 # prune = False
-# quant = True
-quant = False
+quant = True
+# quant = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
