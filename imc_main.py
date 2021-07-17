@@ -36,7 +36,7 @@ random.seed(12)
 # model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
-model_name = "vgg16_an"
+model_name = "vgg16_bn"
 model = vgg16(pretrained=False)
 # model_name = "nabernet_bn"
 # model = NaberNet(0)
@@ -70,7 +70,7 @@ if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower()
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.005
+learning_rate = 0.001
 # learning_rate = 0.005
 # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
