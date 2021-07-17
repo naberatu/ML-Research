@@ -32,12 +32,12 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-# model_name = "resnet18_an"
-# model = resnet18(pretrained=False)
+model_name = "resnet18_cn"
+model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
-model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
-model = NaberNet(0)
+# model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
+# model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
 only_test = True
