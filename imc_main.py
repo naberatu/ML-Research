@@ -34,7 +34,7 @@ random.seed(12)
 # =============================================================
 # model_name = "resnet18_cn"
 # model = resnet18(pretrained=False)
-model_name = "resnet50_bn"
+model_name = "resnet50_an"
 model = resnet50(pretrained=False)
 # model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
 # model = NaberNet(0)
