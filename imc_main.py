@@ -36,7 +36,7 @@ random.seed(12)
 # model = resnet18(pretrained=False)
 model_name = "resnet50_an"
 model = resnet50(pretrained=False)
-# model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
+# model_name = "nabernet_bn"
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         # =============================================================
         # epochs = math.ceil(EPOCHS * 0.1)
         fit(model=model_pruned, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=2, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
+            epochs=math.ceil(EPOCHS * 0.2), model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
         model_pruned = torch.load(dir_models + model_name + ".pth")
         acc_pruned = test(model=model_pruned, model_name=model_name, test_data_loader=test_loader,
                           divider=divider, re_test=True)

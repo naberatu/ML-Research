@@ -5,6 +5,7 @@ import warnings
 import torch_pruning as tp
 from torch.nn import modules
 from torchvision.models.resnet import BasicBlock
+from torchvision.models.resnet import Bottleneck
 
 warnings.filterwarnings("ignore")
 device = torch.device('cuda')
@@ -40,7 +41,7 @@ def prune_model(name='', model=None, dir_models='', suffix='', im_size=224):
         #     prune_conv(m)
         #     conv_index -= 1
         # elif isinstance(m, BasicBlock):
-        if isinstance(m, BasicBlock):
+        if isinstance(m, BasicBlock) or isinstance(m, Bottleneck):
             prune_conv(m.conv1, block_prune_probs[blk_id])
             prune_conv(m.conv2, block_prune_probs[blk_id])
             if blk_id < limit - 1:
