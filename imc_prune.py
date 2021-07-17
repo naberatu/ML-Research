@@ -39,7 +39,7 @@ def prune_model(name='', model=None, dir_models='', suffix='_pruned', im_size=22
             break
 
     for m in list(model.modules()):
-        if isinstance(m, modules.Conv2d) and (conv_index > 1 or 'naber' not in name.lower()):
+        if isinstance(m, modules.Conv2d) and 'resnet' not in name.lower():
             prune_conv(m)
             conv_index -= 1
         if isinstance(m, BasicBlock) or isinstance(m, Bottleneck):

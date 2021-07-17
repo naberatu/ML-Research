@@ -36,10 +36,10 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_an"
-model = resnet18(pretrained=False)
-# model_name = "resnet50_an"
-# model = resnet50(pretrained=False)
+# model_name = "resnet18_cn"
+# model = resnet18(pretrained=False)
+model_name = "resnet50_an"
+model = resnet50(pretrained=False)
 # model_name = "vgg16_bn"
 # model = vgg16(pretrained=False)
 # model_name = "nabernet_bn"
@@ -52,8 +52,8 @@ only_test = True
 graph = False
 prune = True
 # prune = False
-quant = True
-# quant = False
+# quant = True
+quant = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
@@ -76,7 +76,7 @@ if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower()
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.001
+learning_rate = 0.0001
 # learning_rate = 0.005
 # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -201,7 +201,13 @@ if __name__ == '__main__':
 
     steps = math.ceil(len(trainset) / batchsize)
     digits = math.floor(len(str(steps)) / 2)
+    epochs = math.ceil(EPOCHS * 0.2)
+    tag = '_pruned'
     acc_original = 0.0
+
+    if only_test and prune and quant:
+        model_name += tag
+        model = torch.load(dir_models + model_name + '.pth')    # Summons pruned model.
 
     if not only_test:
         rem_old_file = False
@@ -236,19 +242,10 @@ if __name__ == '__main__':
         Plot(model_name).plot(only_test=only_test)
         print("> Plot Closed.")
 
-    epochs = math.ceil(EPOCHS * 0.2)
-    if prune:
-        if not only_test:
-            # EVAL Original Model
-            # =============================================================
-            acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader,
-                                divider=divider, re_test=True)
-            print(divider)
-            print("\n> All Epochs completed!")
+    if prune and not quant:
 
         # STEP Prune Model
         # =============================================================
-        tag = '_pruned'
         model_pruned = prune_model(model=model, name=model_name, dir_models=dir_models_p, suffix=tag, im_size=IMGSIZE)
         model_name += tag
 
@@ -276,13 +273,6 @@ if __name__ == '__main__':
 
     if quant:
         dir_m = dir_models_q if not prune else dir_models_pq
-        if not only_test:
-            # EVAL Original Model
-            # =============================================================
-            acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader,
-                                divider=divider, re_test=True)
-            print(divider)
-            print("\n> All Epochs completed!")
 
         # STEP Quantize Model
         # =============================================================
