@@ -32,10 +32,10 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_cn"
-model = resnet18(pretrained=False)
-# model_name = "resnet50_an"
-# model = resnet50(pretrained=False)
+# model_name = "resnet18_cn"
+# model = resnet18(pretrained=False)
+model_name = "resnet50_bn"
+model = resnet50(pretrained=False)
 # model_name = "nabernet_bn"       # B2 is the best, with 40 epochs.
 # model = NaberNet(0)
 
@@ -68,7 +68,7 @@ if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower()
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.001
+learning_rate = 0.0005
 # learning_rate = 0.005
 # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -89,7 +89,7 @@ elif "sars" in SET_NAME.lower():
 elif "covidx" in SET_NAME.lower():
     CLASSES = ['CTX_NC', 'CTX_CO']
     IMGSIZE = 256
-    EPOCHS = 20
+    EPOCHS = 10
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 
 # =============================================================
