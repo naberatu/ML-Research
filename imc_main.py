@@ -13,6 +13,7 @@ from imc_fit import *
 from imc_plot_run import *
 from imc_dataset import CTDataset
 from imc_prune import prune_model
+from imc_prune import quantize_model
 
 # Imported models
 from imc_nabernet import NaberNet
@@ -32,12 +33,12 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-# model_name = "resnet18_cn"
-# model = resnet18(pretrained=False)
+model_name = "resnet18_an"
+model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
-model_name = "vgg16_bn"
-model = vgg16(pretrained=False)
+# model_name = "vgg16_bn"
+# model = vgg16(pretrained=False)
 # model_name = "nabernet_bn"
 # model = NaberNet(0)
 
@@ -46,8 +47,10 @@ only_test = True
 # only_test = False
 # graph = True
 graph = False
-prune = True
-# prune = False
+# prune = True
+prune = False
+quant = True
+# quant = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
@@ -229,6 +232,7 @@ if __name__ == '__main__':
         Plot(model_name).plot(only_test=only_test)
         print("> Plot Closed.")
 
+    epochs = math.ceil(EPOCHS * 0.2)
     if prune:
         if not only_test:
             # EVAL Original Model
@@ -246,9 +250,8 @@ if __name__ == '__main__':
 
         # EVAL Pruned Model
         # =============================================================
-        # epochs = math.ceil(EPOCHS * 0.1)
         fit(model=model_pruned, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=math.ceil(EPOCHS * 0.2), model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
+            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
         model_pruned = torch.load(dir_models + model_name + ".pth")
         acc_pruned = test(model=model_pruned, model_name=model_name, test_data_loader=test_loader,
                           divider=divider, re_test=True)
@@ -259,6 +262,41 @@ if __name__ == '__main__':
         print('Origin Model Accuracy:\t', '{:>6}'.format(acc1))
         print('Pruned Model Accuracy:\t', '{:>6}'.format(acc2))
         result = (acc_pruned - acc_original) / acc_original
+        diff = '{:.2f}%'.format(abs(result) * 100)
+        state_str = 'dropped' if result < 0 else 'rose'
+        gap = '\t\t' if abs(result) * 100 < 10.0 else '\t'
+        print('Accuracy ' + state_str + ' by:' + gap, '{:>6}'.format(diff))
+        print(divider)
+
+    if quant:
+        if not only_test:
+            # EVAL Original Model
+            # =============================================================
+            acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader,
+                                divider=divider, re_test=True)
+            print(divider)
+            print("\n> All Epochs completed!")
+
+        # STEP Quantize Model
+        # =============================================================
+        tag = '_quant'
+        model_quantized = quantize_model(model=model, name=model_name, dir_models=dir_models, suffix=tag, im_size=IMGSIZE)
+        model_name += tag
+
+        # EVAL Quantized Model
+        # =============================================================
+        fit(model=model_quantized, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
+            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
+        model_quantized = torch.load(dir_models + model_name + ".pth")
+        acc_quantized = test(model=model_quantized, model_name=model_name, test_data_loader=test_loader,
+                             divider=divider, re_test=True)
+
+        print(divider)
+        acc1 = '{:.1f}%'.format(acc_original)
+        acc2 = '{:.1f}%'.format(acc_quantized)
+        print('Origin Model Accuracy:\t', '{:>6}'.format(acc1))
+        print('Quant. Model Accuracy:\t', '{:>6}'.format(acc2))
+        result = (acc_quantized - acc_original) / acc_original
         diff = '{:.2f}%'.format(abs(result) * 100)
         state_str = 'dropped' if result < 0 else 'rose'
         gap = '\t\t' if abs(result) * 100 < 10.0 else '\t'

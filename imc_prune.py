@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 device = torch.device('cuda')
 
 
-def prune_model(name='', model=None, dir_models='', suffix='', im_size=224):
+def prune_model(name='', model=None, dir_models='', suffix='_pruned', im_size=224):
     print('\nPruning Model: ' + name + '...', end='\t')
 
     model.to(device)
@@ -46,6 +46,26 @@ def prune_model(name='', model=None, dir_models='', suffix='', im_size=224):
             if blk_id < limit - 1:
                 blk_id += 1
 
+    print('COMPLETE')
+
+    # 5. Save Model
+    print('Saving', name + suffix + '...', end='\t')
+    filename = dir_models + name + suffix + ".pth"
+    torch.save(model, filename)
+    print('COMPLETE')
+    return torch.load(filename)
+
+
+def quantize_model(name='', model=None, dir_models='', suffix='_quant', im_size=224):
+    print('\nQuantizing Model: ' + name + '...', end='\t')
+
+    # quant_mods = {}
+    # for m in list(model.modules()):
+    #     if isinstance(m, BasicBlock) or isinstance(m, Bottleneck):
+    #         quant_mods.update(m.conv1)
+    #         quant_mods.append(m.conv2)
+
+    model = torch.quantization.quantize_dynamic(model, {BasicBlock, Bottleneck}, dtype=torch.qint8)
     print('COMPLETE')
 
     # 5. Save Model
