@@ -23,7 +23,10 @@ from torchvision.models import vgg16
 
 # Directories
 dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/'
-# dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'
+dir_models_p = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/pruned/'
+dir_models_q = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/quantized/'
+dir_models_pq = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/pruned_quantized/'
+cut_dir = 'C:/Users/elite/PycharmProjects/Pytorch/'
 dir_orig = 'C:/Users/elite/PycharmProjects/Pytorch/data/covct/'
 dir_ctx = 'C:/Users/elite/PycharmProjects/Pytorch/data/ct_ctx/'
 
@@ -47,10 +50,10 @@ only_test = True
 # only_test = False
 # graph = True
 graph = False
-# prune = True
-prune = False
-quant = True
-# quant = False
+prune = True
+# prune = False
+# quant = True
+quant = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
@@ -220,7 +223,8 @@ if __name__ == '__main__':
         print(divider)
 
         fit(model=model, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=EPOCHS, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
+            epochs=EPOCHS, model_name=model_name, divider=divider, print_freq=math.pow(10, digits),
+            sub_folder=dir_models.replace(cut_dir, ''))
         print("\n> All Epochs completed!")
     else:
         acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader, divider=divider, re_test=True)
@@ -245,14 +249,16 @@ if __name__ == '__main__':
         # STEP Prune Model
         # =============================================================
         tag = '_pruned'
-        model_pruned = prune_model(model=model, name=model_name, dir_models=dir_models, suffix=tag, im_size=IMGSIZE)
+        model_pruned = prune_model(model=model, name=model_name, dir_models=dir_models_p, suffix=tag, im_size=IMGSIZE)
         model_name += tag
 
         # EVAL Pruned Model
         # =============================================================
         fit(model=model_pruned, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
-        model_pruned = torch.load(dir_models + model_name + ".pth")
+            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits),
+            sub_folder=dir_models_p.replace(cut_dir, ''))
+
+        model_pruned = torch.load(dir_models_p + model_name + ".pth")
         acc_pruned = test(model=model_pruned, model_name=model_name, test_data_loader=test_loader,
                           divider=divider, re_test=True)
 
@@ -269,6 +275,7 @@ if __name__ == '__main__':
         print(divider)
 
     if quant:
+        dir_m = dir_models_q if not prune else dir_models_pq
         if not only_test:
             # EVAL Original Model
             # =============================================================
@@ -280,14 +287,15 @@ if __name__ == '__main__':
         # STEP Quantize Model
         # =============================================================
         tag = '_quantized'
-        model_quantized = quantize_model(model=model, name=model_name, dir_models=dir_models, suffix=tag)
+        model_quantized = quantize_model(model=model, name=model_name, dir_models=dir_m, suffix=tag)
         model_name += tag
 
         # EVAL Quantized Model
         # =============================================================
         fit(model=model_quantized, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits))
-        model_quantized = torch.load(dir_models + model_name + ".pth")
+            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits),
+            sub_folder=dir_m.replace(cut_dir, ''))
+        model_quantized = torch.load(dir_m + model_name + ".pth")
         acc_quantized = test(model=model_quantized, model_name=model_name, test_data_loader=test_loader,
                              divider=divider, re_test=True)
 

@@ -12,8 +12,8 @@ import logging
 device = torch.device('cuda')
 
 
-def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.nn.CrossEntropyLoss(),
-        print_freq=10, save_model=True, save_params=True, best_acc=0.0, model_name='Empty', divider=''):
+def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.nn.CrossEntropyLoss(), best_acc=0.0,
+        print_freq=10, save_model=True, save_params=True, sub_folder='', model_name='Empty', divider=''):
 
     for epoch in range(epochs):
         adjust_learning_rate(optimizer, epochs)
@@ -25,11 +25,12 @@ def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.
         if acc_test > best_acc:
             if save_model:
                 print("=== Model Saved with Accuracy: \t\t\t{:.1f}%".format(acc_test))
-                model_save(model, model_name)
+                model_save(model=model, model_name=model_name, sub_folder=sub_folder)
                 best_acc = acc_test
             if save_params:
                 print("=== Parameters Saved with Accuracy: \t{:.1f}%".format(acc_test))
-                params_save(model, epoch, optimizer, acc_train, acc_test, model_name=model_name)
+                params_save(model=model, epoch=epoch, optimizer=optimizer, train_accuracy_1=acc_train,
+                            test_accuracy_1=acc_test, model_name=model_name, sub_folder=sub_folder)
                 best_acc = acc_test
 
     return acc_train, acc_test
@@ -246,20 +247,20 @@ def adjust_learning_rate(optimizer, epoch, lr=0.001):
     return None
 
 
-def model_save(model, model_name):
-    path_whole = str(pathlib.Path.cwd()) + '/' + 'imc_models'
+def model_save(model=None, model_name='', sub_folder=''):
+    path_whole = str(pathlib.Path.cwd()) + sub_folder
     path_whole = pathlib.Path(path_whole)
     path_whole.mkdir(parents=True, exist_ok=True)
-    file_whole = str(path_whole) + '/' + model_name + '.pth'
+    file_whole = str(path_whole) + model_name + '.pth'
 
     torch.save(model, file_whole)
 
 
-def params_save(model, epoch, optimizer, train_accuracy_1, test_accuracy_1, model_name):
-    path_params = str(pathlib.Path.cwd()) + '/' + 'imc_models'
+def params_save(model=None, epoch=1, optimizer=None, train_accuracy_1=0.0, test_accuracy_1=0.0, model_name='', sub_folder=''):
+    path_params = str(pathlib.Path.cwd()) + sub_folder
     path_params = pathlib.Path(path_params)
     path_params.mkdir(parents=True, exist_ok=True)
-    filename = str(path_params) + "/" + model_name + '_params' + '.pth.tar'
+    filename = str(path_params) + model_name + '_params' + '.pth.tar'
 
     torch.save({
         'epoch': epoch,
