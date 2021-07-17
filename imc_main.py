@@ -50,10 +50,10 @@ only_test = True
 # only_test = False
 # graph = True
 graph = False
-prune = True
-# prune = False
-# quant = True
-quant = False
+# prune = True
+prune = False
+quant = True
+# quant = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
