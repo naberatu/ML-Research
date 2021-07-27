@@ -8,6 +8,8 @@ from torchvision.models.resnet import BasicBlock
 from torchvision.models.resnet import Bottleneck
 from torchvision.models.quantization.resnet import QuantizableBasicBlock
 from torchvision.models.quantization.resnet import QuantizableBottleneck
+from torchvision.models.quantization.resnet import BasicBlock
+from torchvision.models.quantization.resnet import Bottleneck
 
 warnings.filterwarnings("ignore")
 device = torch.device('cuda')
@@ -27,6 +29,7 @@ def prune_model(name='', model=None, dir_models='', suffix='_pruned', im_size=22
         plan.exec()
 
     block_prune_probs = [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3]
+    # block_prune_probs = [0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3, 0.3]
     limit = len(block_prune_probs) - 1
     blk_id = 0
     conv_index = 0
@@ -40,8 +43,9 @@ def prune_model(name='', model=None, dir_models='', suffix='_pruned', im_size=22
 
     for m in list(model.modules()):
         if isinstance(m, modules.Conv2d) and 'resnet' not in name.lower():
-            prune_conv(m)
-            conv_index -= 1
+            if 'naber' not in name.lower() or ('naber' in name.lower() and conv_index > 1):
+                prune_conv(m)
+                conv_index -= 1
         if isinstance(m, BasicBlock) or isinstance(m, Bottleneck):
             prune_conv(m.conv1, block_prune_probs[blk_id])
             prune_conv(m.conv2, block_prune_probs[blk_id])
@@ -61,11 +65,8 @@ def prune_model(name='', model=None, dir_models='', suffix='_pruned', im_size=22
 def quantize_model(name='', model=None, dir_models='', suffix='_quant'):
     print('\nQuantizing Model: ' + name + '...', end='\t')
 
-    model = torch.quantization.quantize_dynamic(
-        model,
-        {QuantizableBottleneck, QuantizableBasicBlock},
-        dtype=torch.qint8
-    )
+    model.to(torch.device('cpu'))
+    model = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
     print('COMPLETE')
 
     # 5. Save Model
@@ -73,4 +74,5 @@ def quantize_model(name='', model=None, dir_models='', suffix='_quant'):
     filename = dir_models + name + suffix + ".pth"
     torch.save(model, filename)
     print('COMPLETE')
-    return torch.load(filename)
+
+    return model

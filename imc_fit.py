@@ -13,14 +13,16 @@ device = torch.device('cuda')
 
 
 def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.nn.CrossEntropyLoss(), best_acc=0.0,
-        print_freq=10, save_model=True, save_params=True, sub_folder='', model_name='Empty', divider=''):
+        print_freq=10, save_model=True, save_params=True, quant=False, sub_folder='', model_name='Empty', divider=''):
 
+    global device
+    device = torch.device('cpu') if quant else torch.device('cuda')
     for epoch in range(epochs):
         adjust_learning_rate(optimizer, epochs)
         acc_train = train(model=model, model_name=model_name, train_loader=train_loader, optimizer=optimizer,
-                          epochs=epoch, criterion=criterion, print_freq=print_freq, divider=divider)
+                          epochs=epoch, criterion=criterion, print_freq=print_freq, quant=quant, divider=divider)
         acc_test = test(model=model, model_name=model_name, test_data_loader=test_loader,
-                        epoch=epoch, print_freq=print_freq, divider=divider, re_test=False)
+                        epoch=epoch, print_freq=print_freq, divider=divider, re_test=False, quant=quant)
 
         if acc_test > best_acc:
             if save_model:
@@ -37,13 +39,16 @@ def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.
 
 
 def train(model=None, train_loader=None, optimizer=None, epochs=1, model_name='',
-          criterion=nn.CrossEntropyLoss(), print_freq=10, divider=''):
+          criterion=nn.CrossEntropyLoss(), quant=False, print_freq=10, divider=''):
 
     path = pathlib.Path('logs/train_logger/')
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError:
         print("\n> ERROR: Failed to make nested directory")
+
+    global device
+    device = torch.device('cpu') if quant else torch.device('cuda')
 
     # Print Training Epoch
     print()
@@ -115,13 +120,16 @@ def train(model=None, train_loader=None, optimizer=None, epochs=1, model_name=''
 
 
 def test(model=None, test_data_loader=None, model_name='', epoch=0, criterion=torch.nn.CrossEntropyLoss(),
-         print_freq=10, divider='', re_test=False):
+         print_freq=10, divider='', re_test=False, quant=False):
 
     path = pathlib.Path('logs/test_logger/')
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError:
         print("\n> ERROR: Failed to make nested directory")
+
+    global device
+    device = torch.device('cpu') if quant else torch.device('cuda')
 
     # Print Testing Round
     print()

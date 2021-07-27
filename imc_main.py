@@ -1,5 +1,6 @@
 # Environment imports
 import torch
+import torchsummary
 from torch.utils.data import DataLoader
 from torchvision import transforms as transforms
 import torch.optim as optim
@@ -14,6 +15,7 @@ from imc_plot_run import *
 from imc_dataset import CTDataset
 from imc_prune import prune_model
 from imc_prune import quantize_model
+from torchsummary import summary
 
 # Imported models
 from imc_nabernet import NaberNet
@@ -23,6 +25,7 @@ from torchvision.models import vgg16
 
 # Directories
 dir_models = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/'
+dir_models_old = 'C:/Users/elite/PycharmProjects/Pytorch/models_old/'
 dir_models_p = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/pruned/'
 dir_models_q = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/quantized/'
 dir_models_pq = 'C:/Users/elite/PycharmProjects/Pytorch/imc_models/pruned_quantized/'
@@ -36,13 +39,16 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-# model_name = "resnet18_cn"
+# model_name = "resnet18_an"
+# model_name = "m_resnet18"
 # model = resnet18(pretrained=False)
-model_name = "resnet50_an"
+# model_name = "resnet50_bn"
+model_name = "m_resnet50"
 model = resnet50(pretrained=False)
 # model_name = "vgg16_bn"
 # model = vgg16(pretrained=False)
 # model_name = "nabernet_bn"
+# model_name = "nabernet_b2"
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
@@ -50,8 +56,8 @@ only_test = True
 # only_test = False
 # graph = True
 graph = False
-# prune = True
-prune = False
+prune = True
+# prune = False
 quant = True
 # quant = False
 batchsize = 8       # Chosen for the GPU: RTX 2060
@@ -59,7 +65,9 @@ batchsize = 8       # Chosen for the GPU: RTX 2060
 # Loading a pretrained model
 model_loaded = only_test
 if model_loaded:
-    model = torch.load(dir_models + model_name + ".pth")
+    # model = torch.load(dir_models + model_name + ".pth")
+    model = torch.load(dir_models_old + model_name + ".tar")
+    model_name += '_bpq'
 
 # =============================================================
 # SELECT: Dataset Name
@@ -99,6 +107,8 @@ elif "covidx" in SET_NAME.lower():
     IMGSIZE = 256
     EPOCHS = 10
     normalize = transforms.Normalize(mean=0.611, std=0.273)
+
+# print(summary(model, (3, 224, 224)))
 
 # =============================================================
 # STEP: Setup Dataset Transforms
@@ -201,13 +211,13 @@ if __name__ == '__main__':
 
     steps = math.ceil(len(trainset) / batchsize)
     digits = math.floor(len(str(steps)) / 2)
-    epochs = math.ceil(EPOCHS * 0.2)
+    epochs = math.ceil(EPOCHS * 0.1)
     tag = '_pruned'
     acc_original = 0.0
 
     if only_test and prune and quant:
         model_name += tag
-        model = torch.load(dir_models + model_name + '.pth')    # Summons pruned model.
+        model = torch.load(dir_models_p + model_name + '.pth')    # Summons pruned model.
 
     if not only_test:
         rem_old_file = False
@@ -282,12 +292,12 @@ if __name__ == '__main__':
 
         # EVAL Quantized Model
         # =============================================================
-        fit(model=model_quantized, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-            epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits),
-            sub_folder=dir_m.replace(cut_dir, ''))
-        model_quantized = torch.load(dir_m + model_name + ".pth")
+        # fit(model=model_quantized, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
+        #     epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits),
+        #     sub_folder=dir_m.replace(cut_dir, ''), quant=quant)
+        # model_quantized = torch.load(dir_m + model_name + ".pth")
         acc_quantized = test(model=model_quantized, model_name=model_name, test_data_loader=test_loader,
-                             divider=divider, re_test=True)
+                             divider=divider, re_test=True, quant=quant)
 
         print(divider)
         acc1 = '{:.1f}%'.format(acc_original)
