@@ -39,35 +39,29 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-# model_name = "resnet18_an"
-# model_name = "m_resnet18"
-# model = resnet18(pretrained=False)
-# model_name = "resnet50_bn"
-model_name = "m_resnet50"
-model = resnet50(pretrained=False)
-# model_name = "vgg16_bn"
+model_name = "resnet18_an"
+model = resnet18(pretrained=False)
+# model_name = "resnet50_an"
+# model = resnet50(pretrained=False)
+# model_name = "vgg16_an"
 # model = vgg16(pretrained=False)
-# model_name = "nabernet_bn"
-# model_name = "nabernet_b2"
+# model_name = "nabernet_an"
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-only_test = True
-# only_test = False
-# graph = True
-graph = False
-prune = True
-# prune = False
-quant = True
-# quant = False
+params = [True, True, False, False]         # Training
+# params = [False, True, False, False]        # Testing
+# params = [False, False, True, False]        # Pruning
+# params = [False, False, False, True]        # Quantizing
+# params = [False, False, True, True]         # Pruning & Quantizing
+training, graph, prune, quant = params[0], params[1], params[2], params[3]
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
 # Loading a pretrained model
-model_loaded = only_test
-if model_loaded:
-    # model = torch.load(dir_models + model_name + ".pth")
-    model = torch.load(dir_models_old + model_name + ".tar")
-    model_name += '_bpq'
+if not training:
+    model = torch.load(dir_models + model_name + ".pth")
+    # model = torch.load(dir_models_old + model_name + ".tar")
+    # model_name += '_bpq'
 
 # =============================================================
 # SELECT: Dataset Name
@@ -79,14 +73,12 @@ elif '_b' in model_name:
 elif '_c' in model_name:
     SET_NAME = "COVIDx CT-1"            # Contains 115,837 images.    (Set C)
 
-if "naber" in model_name and not model_loaded and 'ucsd' not in SET_NAME.lower():
+if "naber" in model_name and training and 'ucsd' not in SET_NAME.lower():
     model = NaberNet(1 if 'sars' in SET_NAME.lower() else 2)
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.0001
-# learning_rate = 0.005
-# optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+learning_rate = 0.001
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # =============================================================
@@ -95,7 +87,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 if "ucsd" in SET_NAME.lower():
     CLASSES = ['UCSD_NC', 'UCSD_CO']
     IMGSIZE = 256
-    EPOCHS = 10
+    EPOCHS = 20
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
 elif "sars" in SET_NAME.lower():
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
@@ -192,7 +184,7 @@ if __name__ == '__main__':
     print("MODEL:\t\t\t\t", model_name)
     print("DATASET:\t\t\t", SET_NAME)
     print("CLASSES:\t\t\t", CLASSES)
-    if not only_test:
+    if training:
         print("IMAGE BATCHES:\t\t", str(batchsize) + "x" + str(IMGSIZE) + "x" + str(IMGSIZE))
         valsize = 0
         if 'valset' in locals():
@@ -215,11 +207,11 @@ if __name__ == '__main__':
     tag = '_pruned'
     acc_original = 0.0
 
-    if only_test and prune and quant:
+    if not training and prune and quant:
         model_name += tag
         model = torch.load(dir_models_p + model_name + '.pth')    # Summons pruned model.
 
-    if not only_test:
+    if training:
         rem_old_file = False
         if os.path.exists(TRAIN_PATH):
             os.remove(TRAIN_PATH)
@@ -243,13 +235,13 @@ if __name__ == '__main__':
             sub_folder=dir_models.replace(cut_dir, ''))
         print("\n> All Epochs completed!")
     else:
-        acc_original = test(model=model, model_name=model_name, test_data_loader=test_loader, divider=divider, re_test=True)
+        acc_original = test(model=model, model_name=model_name, test_loader=test_loader, divider=divider, re_test=True)
         print(divider)
         print("\n> All Epochs completed!")
 
     if graph:
         print("\n> Generating Plots...")
-        Plot(model_name).plot(only_test=only_test)
+        Plot(model_name).plot(only_test=(not training))
         print("> Plot Closed.")
 
     if prune and not quant:
@@ -266,7 +258,7 @@ if __name__ == '__main__':
             sub_folder=dir_models_p.replace(cut_dir, ''))
 
         model_pruned = torch.load(dir_models_p + model_name + ".pth")
-        acc_pruned = test(model=model_pruned, model_name=model_name, test_data_loader=test_loader,
+        acc_pruned = test(model=model_pruned, model_name=model_name, test_loader=test_loader,
                           divider=divider, re_test=True)
 
         print(divider)
@@ -277,8 +269,8 @@ if __name__ == '__main__':
         result = (acc_pruned - acc_original) / acc_original
         diff = '{:.2f}%'.format(abs(result) * 100)
         state_str = 'dropped' if result < 0 else 'rose'
-        gap = '\t\t' if abs(result) * 100 < 10.0 else '\t'
-        print('Accuracy ' + state_str + ' by:' + gap, '{:>6}'.format(diff))
+        # gap = '\t\t' if abs(result) * 100 < 10.0 else '\t'
+        print('Accuracy ' + state_str + ' by:' + '\t', '{:>6}'.format(diff))
         print(divider)
 
     if quant:
@@ -292,11 +284,7 @@ if __name__ == '__main__':
 
         # EVAL Quantized Model
         # =============================================================
-        # fit(model=model_quantized, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
-        #     epochs=epochs, model_name=model_name, divider=divider, print_freq=math.pow(10, digits),
-        #     sub_folder=dir_m.replace(cut_dir, ''), quant=quant)
-        # model_quantized = torch.load(dir_m + model_name + ".pth")
-        acc_quantized = test(model=model_quantized, model_name=model_name, test_data_loader=test_loader,
+        acc_quantized = test(model=model_quantized, model_name=model_name, test_loader=test_loader,
                              divider=divider, re_test=True, quant=quant)
 
         print(divider)
@@ -307,6 +295,6 @@ if __name__ == '__main__':
         result = (acc_quantized - acc_original) / acc_original
         diff = '{:.2f}%'.format(abs(result) * 100)
         state_str = 'dropped' if result < 0 else 'rose'
-        gap = '\t\t' if abs(result) * 100 < 10.0 else '\t'
-        print('Accuracy ' + state_str + ' by:' + gap, '{:>6}'.format(diff))
+        # gap = '\t\t' if abs(result) * 100 < 10.0 else '\t'
+        print('Accuracy ' + state_str + ' by:' + '\t', '{:>6}'.format(diff))
         print(divider)

@@ -21,7 +21,7 @@ def fit(model, train_loader, test_loader, optimizer, epochs=10, criterion=torch.
         adjust_learning_rate(optimizer, epochs)
         acc_train = train(model=model, model_name=model_name, train_loader=train_loader, optimizer=optimizer,
                           epochs=epoch, criterion=criterion, print_freq=print_freq, quant=quant, divider=divider)
-        acc_test = test(model=model, model_name=model_name, test_data_loader=test_loader,
+        acc_test = test(model=model, model_name=model_name, test_loader=test_loader,
                         epoch=epoch, print_freq=print_freq, divider=divider, re_test=False, quant=quant)
 
         if acc_test > best_acc:
@@ -119,7 +119,7 @@ def train(model=None, train_loader=None, optimizer=None, epochs=1, model_name=''
     return top1.avg
 
 
-def test(model=None, test_data_loader=None, model_name='', epoch=0, criterion=torch.nn.CrossEntropyLoss(),
+def test(model=None, test_loader=None, model_name='', epoch=0, criterion=torch.nn.CrossEntropyLoss(),
          print_freq=10, divider='', re_test=False, quant=False):
 
     path = pathlib.Path('logs/test_logger/')
@@ -150,14 +150,14 @@ def test(model=None, test_data_loader=None, model_name='', epoch=0, criterion=to
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
-    progress = ProgressMeter(len(test_data_loader), batch_time, losses, top1, prefix='Test: ')
+    progress = ProgressMeter(len(test_loader), batch_time, losses, top1, prefix='Test: ')
 
     model.to(device)
     model.eval()
     with torch.no_grad():
         end = time.time()
 
-    for i, x in enumerate(test_data_loader):
+    for i, x in enumerate(test_loader):
 
         batch, label = x['img'], x['label']
         batch = batch.to(device)
@@ -183,7 +183,7 @@ def test(model=None, test_data_loader=None, model_name='', epoch=0, criterion=to
             'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
             'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
         )
-        logger.info(msg.format(epoch, i, len(test_data_loader), loss=losses, batch_time=batch_time, top1=top1))
+        logger.info(msg.format(epoch, i, len(test_loader), loss=losses, batch_time=batch_time, top1=top1))
 
     return top1.avg
 
