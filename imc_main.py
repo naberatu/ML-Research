@@ -39,10 +39,10 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_bn"
-model = resnet18(pretrained=False)
-# model_name = "resnet50_an"
-# model = resnet50(pretrained=False)
+# model_name = "resnet18_bn"
+# model = resnet18(pretrained=False)
+model_name = "resnet50_bn"
+model = resnet50(pretrained=False)
 # model_name = "vgg16_an"
 # model = vgg16(pretrained=False)
 # model_name = "nabernet_an"
