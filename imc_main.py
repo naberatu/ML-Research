@@ -39,7 +39,7 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_an"
+model_name = "resnet18_bn"
 model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
