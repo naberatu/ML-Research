@@ -39,18 +39,18 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_bn"
+model_name = "resnet18_an"
 model = resnet18(pretrained=False)
 # model_name = "resnet50_bn"
 # model = resnet50(pretrained=False)
 # model_name = "vgg16_bn"
 # model = vgg16(pretrained=False)
-# model_name = "nabernet_bn"
+# model_name = "nabernet_an"
 # model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
-params = [True, True, False, False]         # Training
-# params = [False, True, False, False]        # Testing
+# params = [True, True, False, False]         # Training
+params = [False, True, False, False]        # Testing
 # params = [False, False, True, False]        # Pruning
 # params = [False, False, False, True]        # Quantizing
 # params = [False, False, True, True]         # Pruning & Quantizing
@@ -75,10 +75,11 @@ elif '_c' in model_name:
 
 if "naber" in model_name and training and 'ucsd' not in SET_NAME.lower():
     model = NaberNet(1 if 'sars' in SET_NAME.lower() else 2)
+
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.001
+learning_rate = 0.002
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # =============================================================
@@ -237,7 +238,8 @@ if __name__ == '__main__':
     else:
         acc_original = test(model=model, model_name=model_name, test_loader=test_loader, divider=divider, re_test=True)
         print(divider)
-        print("\n> All Epochs completed!")
+        acc1 = '{:.1f}%'.format(acc_original)
+        print("\n> Testing Complete:\t\t\t ", '{:>6}'.format(acc1))
 
     if graph:
         print("\n> Generating Plots...")
