@@ -39,14 +39,14 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-# model_name = "resnet18_bn"
-# model = resnet18(pretrained=False)
+model_name = "resnet18_bn"
+model = resnet18(pretrained=False)
 # model_name = "resnet50_bn"
 # model = resnet50(pretrained=False)
 # model_name = "vgg16_bn"
 # model = vgg16(pretrained=False)
-model_name = "nabernet_an"
-model = NaberNet(0)
+# model_name = "nabernet_bn"
+# model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
 params = [True, True, False, False]         # Training
@@ -80,7 +80,6 @@ if "naber" in model_name and training and 'ucsd' not in SET_NAME.lower():
 # =============================================================
 learning_rate = 0.001
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-# optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
 # =============================================================
 # STEP: Generate Dataset Parameters
