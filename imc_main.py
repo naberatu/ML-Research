@@ -1,4 +1,6 @@
 # Environment imports
+import sys
+
 import torch
 import torchsummary
 from torch.utils.data import DataLoader
@@ -39,21 +41,21 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-# model_name = "resnet18_cn"
+# model_name = "resnet18_bn"
 # model = resnet18(pretrained=False)
 # model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
 # model_name = "vgg16_bn"
 # model = vgg16(pretrained=False)
-model_name = "nabernet_cn"
+model_name = "nabernet_an"
 model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
 # params = [True, True, False, False]         # Training
-params = [False, True, False, False]        # Testing
+# params = [False, True, False, False]        # Testing
 # params = [False, False, True, False]        # Pruning
 # params = [False, False, False, True]        # Quantizing
-# params = [False, False, True, True]         # Pruning & Quantizing
+params = [False, False, True, True]         # Pruning & Quantizing
 training, graph, prune, quant = params[0], params[1], params[2], params[3]
 batchsize = 8       # Chosen for the GPU: RTX 2060
 
@@ -101,7 +103,8 @@ elif "covidx" in SET_NAME.lower():
     EPOCHS = 10
     normalize = transforms.Normalize(mean=0.611, std=0.273)
 
-# print(summary(model, (3, 224, 224)))
+# print(summary(model=model, input_size=(3, IMGSIZE, IMGSIZE), device='cuda'))
+# sys.exit(0)
 
 # =============================================================
 # STEP: Setup Dataset Transforms
