@@ -39,14 +39,14 @@ random.seed(12)
 # =============================================================
 # SELECT: Model, Name, and test_only
 # =============================================================
-model_name = "resnet18_an"
-model = resnet18(pretrained=False)
-# model_name = "resnet50_bn"
+# model_name = "resnet18_cn"
+# model = resnet18(pretrained=False)
+# model_name = "resnet50_an"
 # model = resnet50(pretrained=False)
 # model_name = "vgg16_bn"
 # model = vgg16(pretrained=False)
-# model_name = "nabernet_an"
-# model = NaberNet(0)
+model_name = "nabernet_cn"
+model = NaberNet(0)
 
 # Whether the main should just run a test, or do a full fit.
 # params = [True, True, False, False]         # Training
@@ -79,7 +79,7 @@ if "naber" in model_name and training and 'ucsd' not in SET_NAME.lower():
 # =============================================================
 # SELECT: Optimizer and learning rate.
 # =============================================================
-learning_rate = 0.002
+learning_rate = 0.001
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # =============================================================
@@ -88,7 +88,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 if "ucsd" in SET_NAME.lower():
     CLASSES = ['UCSD_NC', 'UCSD_CO']
     IMGSIZE = 256
-    EPOCHS = 20
+    EPOCHS = 10
     normalize = transforms.Normalize(mean=0.6292, std=0.3024)
 elif "sars" in SET_NAME.lower():
     CLASSES = ['SARSCT_NC', 'SARSCT_CO']
